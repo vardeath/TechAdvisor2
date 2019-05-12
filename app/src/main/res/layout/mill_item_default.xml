@@ -8,14 +8,20 @@
     </data>
 
     <FrameLayout
+        android:id="@+id/framelay1"
         android:layout_width="match_parent"
-        android:layout_height="100dp">
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/offcet"
+        android:layout_marginTop="@dimen/offcet"
+        android:layout_marginEnd="@dimen/offcet"
+        android:background="@color/colorPrimary">
 
         <TextView
             android:id="@+id/item_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@{BaseModel.text}" />
+            android:text="@{BaseModel.text}"
+            android:textSize="24sp" />
     </FrameLayout>
 </layout>
