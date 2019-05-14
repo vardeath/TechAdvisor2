@@ -1,7 +1,7 @@
 package com.android.malsoftware.techadvisor;
 
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
-import com.android.malsoftware.techadvisor.databinding.MillItemSelectedBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +35,9 @@ public class MainMenuFragment extends Fragment {
 	private int mItemHeight;
 	private boolean isGlobalLayoutInflated = false;
 	private int mCurrentSelectedPosition = 0;
+
+	private static final int mViewTypeDefault = 0;
+	private static final int mViewTypSelected = 1;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -58,7 +61,6 @@ public class MainMenuFragment extends Fragment {
 		mRecyclerView.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button);
 		getViewSize(mRecyclerView);
-
 		updateUi();
 
 		btn.setOnClickListener(new View.OnClickListener() {
@@ -82,7 +84,8 @@ public class MainMenuFragment extends Fragment {
 	private class MainMenuHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
 		private MillItemDefaultBinding mMillItemDefaultBinding;
-		private MillItemSelectedBinding mMillItemSelectedBinding;
+		private int mDefaultColor;
+		private int mSelectColor;
 
 		MainMenuHolder(MillItemDefaultBinding millItemDefaultBinding) {
 			super(millItemDefaultBinding.getRoot());
@@ -91,16 +94,21 @@ public class MainMenuFragment extends Fragment {
 			itemView.setOnClickListener(this);
 		}
 
-		MainMenuHolder(MillItemSelectedBinding millItemSelectedBinding) {
-			super(millItemSelectedBinding.getRoot());
-			mMillItemSelectedBinding = millItemSelectedBinding;
-			mMillItemSelectedBinding.setBaseModel(new BaseItemViewModel());
-			itemView.setOnClickListener(this);
-		}
-
 		void bind(int position, String val, int itemViewType) {
-			if (itemViewType == 1) mMillItemDefaultBinding.getBaseModel().setText(val + position);
-			if (itemViewType == 2) mMillItemSelectedBinding.getBaseModel().setText(val + position);
+			mMillItemDefaultBinding.getBaseModel().setText(val);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+				mDefaultColor = getResources().getColor(R.color.colorPrimary, Objects.requireNonNull(getActivity()).getTheme());
+				mSelectColor = getResources().getColor(R.color.colorAccent, Objects.requireNonNull(getActivity()).getTheme());
+			} else {
+				mDefaultColor = getResources().getColor(R.color.colorPrimary);
+				mSelectColor = getResources().getColor(R.color.colorAccent);
+			}
+
+			if (itemViewType == mViewTypeDefault) {
+				mMillItemDefaultBinding.getBaseModel().setBackground(mDefaultColor);
+			} else {
+				mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
+			}
 		}
 
 		@Override
@@ -118,7 +126,6 @@ public class MainMenuFragment extends Fragment {
 
 		private List<String> Array;
 		private MillItemDefaultBinding mMillItemDefaultBinding;
-		private MillItemSelectedBinding mMillItemSelectedBinding;
 
 		MainMenuAdaptor(List<String> Array) {
 			this.Array = Array;
@@ -128,8 +135,8 @@ public class MainMenuFragment extends Fragment {
 		public int getItemViewType(int position) {
 			super.getItemViewType(position);
 			if (position == mCurrentSelectedPosition) {
-				return 2;
-			} else return 1;
+				return mViewTypSelected;
+			} else return mViewTypeDefault;
 		}
 
 		@NonNull
@@ -137,14 +144,8 @@ public class MainMenuFragment extends Fragment {
 		public MainMenuHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
 			LayoutInflater inflater = LayoutInflater.from(getActivity());
-			if (viewType == 1) {
-				mMillItemDefaultBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_default, parent, false);
-				return new MainMenuHolder(mMillItemDefaultBinding);
-			}
-			else {
-				mMillItemSelectedBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_selected, parent, false);
-			return new MainMenuHolder(mMillItemSelectedBinding);
-			}
+			mMillItemDefaultBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_default, parent, false);
+			return new MainMenuHolder(mMillItemDefaultBinding);
 		}
 
 		@Override
@@ -161,7 +162,7 @@ public class MainMenuFragment extends Fragment {
 	private void updateUi() {
 		mainMenuAdaptor = new MainMenuAdaptor(mItemsArray);
 		mRecyclerView.setAdapter(mainMenuAdaptor);
-		Objects.requireNonNull(mRecyclerView.getItemAnimator()).setChangeDuration(0);
+		//Objects.requireNonNull(mRecyclerView.getItemAnimator()).setChangeDuration(0);
 	}
 
 	private void getViewSize(final View view) {
@@ -172,12 +173,12 @@ public class MainMenuFragment extends Fragment {
 				@Override
 				public void onGlobalLayout() {
 
-					FrameLayout linearLayout = rootView.findViewById(R.id.framelay1);
+					LinearLayout linearLayout = rootView.findViewById(R.id.framelay1);
 					view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
 
 					final int viewHeight = view.getHeight();
 					final int itemHeight = (int) (linearLayout.getMeasuredHeight() + getResources().getDimension(R.dimen.offcet));
-					mItemQuantity = (int) Math.floor( (double) viewHeight / (double) itemHeight);
+					mItemQuantity = (int) Math.floor((double) viewHeight / (double) itemHeight);
 					mViewHeight = viewHeight;
 					mItemHeight = itemHeight;
 
