@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -113,12 +112,12 @@ public class MainMenuFragment extends Fragment {
 
 		@Override
 		public void onClick(View v) {
-			int oldPos = mCurrentSelectedPosition;
+			int oldSelectedPosition = mCurrentSelectedPosition;
 			mCurrentSelectedPosition = getLayoutPosition();
 			mainMenuAdaptor.notifyItemChanged(mCurrentSelectedPosition);
-			mainMenuAdaptor.notifyItemChanged(oldPos);
+			mainMenuAdaptor.notifyItemChanged(oldSelectedPosition);
 			Log.d("mar2", "mCurrentSelectedPosition" + mCurrentSelectedPosition);
-			Log.d("mar2", "oldPos" + oldPos);
+			Log.d("mar2", "oldSelectedPosition" + oldSelectedPosition);
 		}
 	}
 
