@@ -1,5 +1,6 @@
 package com.android.malsoftware.techadvisor;
 
+import android.graphics.drawable.Animatable2;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,14 +27,11 @@ import java.util.Objects;
 public class MainMenuFragment extends Fragment {
 
 	private List<String> mItemsArray = new ArrayList<>();
-	private RecyclerView mRecyclerView;
 	private MainMenuAdaptor mainMenuAdaptor;
 	private View rootView;
-	private int mItemQuantity;
-	private int mViewHeight;
-	private int mItemHeight;
-	private boolean isGlobalLayoutInflated = false;
-	private int mCurrentSelectedPosition = 0;
+
+	private AutoScrolledRecycleView mAutoScrolledRecycleView;
+
 
 	private static final int mViewTypeDefault = 0;
 	private static final int mViewTypSelected = 1;
@@ -55,32 +53,24 @@ public class MainMenuFragment extends Fragment {
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		rootView = inflater.inflate(R.layout.menu_main_fragment, container, false);
 
-		mRecyclerView = rootView.findViewById(R.id.main_resycleview);
+		mAutoScrolledRecycleView = (AutoScrolledRecycleView) rootView.findViewById(R.id.main_resycleview);
 		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity());
-		mRecyclerView.setLayoutManager(mLayManager);
-		Button btn = rootView.findViewById(R.id.button);
-		getViewSize(mRecyclerView);
+		mAutoScrolledRecycleView.setLayoutManager(mLayManager);
+		Button btn = rootView.findViewById(R.id.button_up);
+		getViewSize(mAutoScrolledRecycleView);
 		updateUi();
 
-		btn.setOnClickListener(new View.OnClickListener() {
+		btn.setOnClickListener(new View.OnClickListener(){
 			@Override
 			public void onClick(View v) {
-				if (isGlobalLayoutInflated) {
-					int count = mRecyclerView.getScrollState();
-					//mRecyclerView.smoothScrollToPosition(mItemQuantity + (mItemQuantity - 2));
-
-					Log.d("mar2", "itemQuantity = " + mItemQuantity);
-					Log.d("mar2", "itemHeight = " + mItemHeight);
-					Log.d("mar2", "viewHeight = " + mViewHeight);
-					Log.d("mar2", "count = " + count);
-				}
+				mAutoScrolledRecycleView.incrementSelectedPosition();
 			}
 		});
 
 		return rootView;
 	}
 
-	private class MainMenuHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+	private class MainMenuHolder extends RecyclerView.ViewHolder{
 
 		private MillItemDefaultBinding mMillItemDefaultBinding;
 		private int mDefaultColor;
@@ -90,7 +80,6 @@ public class MainMenuFragment extends Fragment {
 			super(millItemDefaultBinding.getRoot());
 			mMillItemDefaultBinding = millItemDefaultBinding;
 			mMillItemDefaultBinding.setBaseModel(new BaseItemViewModel());
-			itemView.setOnClickListener(this);
 		}
 
 		void bind(int position, String val, int itemViewType) {
@@ -98,33 +87,22 @@ public class MainMenuFragment extends Fragment {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 				mDefaultColor = getResources().getColor(R.color.colorPrimary, Objects.requireNonNull(getActivity()).getTheme());
 				mSelectColor = getResources().getColor(R.color.colorAccent, Objects.requireNonNull(getActivity()).getTheme());
-			} else {
-				mDefaultColor = getResources().getColor(R.color.colorPrimary);
-				mSelectColor = getResources().getColor(R.color.colorAccent);
 			}
-
 			if (itemViewType == mViewTypeDefault) {
 				mMillItemDefaultBinding.getBaseModel().setBackground(mDefaultColor);
 			} else {
 				mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
 			}
-		}
-
-		@Override
-		public void onClick(View v) {
-			int oldSelectedPosition = mCurrentSelectedPosition;
-			mCurrentSelectedPosition = getLayoutPosition();
-			mainMenuAdaptor.notifyItemChanged(mCurrentSelectedPosition);
-			mainMenuAdaptor.notifyItemChanged(oldSelectedPosition);
-			Log.d("mar2", "mCurrentSelectedPosition" + mCurrentSelectedPosition);
-			Log.d("mar2", "oldSelectedPosition" + oldSelectedPosition);
+			mMillItemDefaultBinding.getBaseModel().setPosition(position);
+			mMillItemDefaultBinding.getBaseModel().setAutoScrolledRecycleView(mAutoScrolledRecycleView);
 		}
 	}
 
-	private class MainMenuAdaptor extends RecyclerView.Adapter<MainMenuHolder> {
+	private class MainMenuAdaptor extends AutoScrolledRecycleView.Adapter<MainMenuHolder> {
 
 		private List<String> Array;
 		private MillItemDefaultBinding mMillItemDefaultBinding;
+		private AutoScrolledRecycleView mAutoScrolledRecycleView;
 
 		MainMenuAdaptor(List<String> Array) {
 			this.Array = Array;
@@ -133,7 +111,7 @@ public class MainMenuFragment extends Fragment {
 		@Override
 		public int getItemViewType(int position) {
 			super.getItemViewType(position);
-			if (position == mCurrentSelectedPosition) {
+			if (position == mAutoScrolledRecycleView.getCurrentSelectedPosition()) {
 				return mViewTypSelected;
 			} else return mViewTypeDefault;
 		}
@@ -156,12 +134,18 @@ public class MainMenuFragment extends Fragment {
 		public int getItemCount() {
 			return mItemsArray.size();
 		}
+
+		@Override
+		public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+			super.onAttachedToRecyclerView(recyclerView);
+			mAutoScrolledRecycleView = (AutoScrolledRecycleView) recyclerView;
+		}
 	}
 
 	private void updateUi() {
 		mainMenuAdaptor = new MainMenuAdaptor(mItemsArray);
-		mRecyclerView.setAdapter(mainMenuAdaptor);
-		//Objects.requireNonNull(mRecyclerView.getItemAnimator()).setChangeDuration(0);
+		mAutoScrolledRecycleView.setAdapter(mainMenuAdaptor);
+		Objects.requireNonNull(mAutoScrolledRecycleView.getItemAnimator()).setChangeDuration(0);
 	}
 
 	private void getViewSize(final View view) {
@@ -177,11 +161,13 @@ public class MainMenuFragment extends Fragment {
 
 					final int viewHeight = view.getHeight();
 					final int itemHeight = (int) (linearLayout.getMeasuredHeight() + getResources().getDimension(R.dimen.offcet));
-					mItemQuantity = (int) Math.floor((double) viewHeight / (double) itemHeight);
-					mViewHeight = viewHeight;
-					mItemHeight = itemHeight;
+					final int itemQuantity = (int) Math.floor((double) viewHeight / (double) itemHeight) - 1;
 
-					isGlobalLayoutInflated = true;
+					mAutoScrolledRecycleView.initRanges(itemQuantity, mItemsArray.size());
+
+					Log.d("mar2", "itemQuantity = " + itemQuantity);
+					Log.d("mar2", "itemHeight = " + viewHeight);
+					Log.d("mar2", "viewHeight = " + itemHeight);
 				}
 			});
 		}
