@@ -16,7 +16,7 @@
         android:layout_marginTop="@dimen/offcet"
         android:layout_marginEnd="@dimen/offcet"
         android:onClick="@{()->BaseModel.onClick()}"
-        android:background="@color/colorPrimary">
+        android:background="@color/colorItemDefault">
 
         <TextView
             android:id="@+id/item_text"

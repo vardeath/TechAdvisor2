@@ -44,7 +44,7 @@ public class MainMenuFragment extends Fragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		for (int i = 0; i < 17; ++i) {
+		for (int i = 0; i < 5; ++i) {
 			mItemsArray.add("item" + i);
 		}
 	}
@@ -83,8 +83,8 @@ public class MainMenuFragment extends Fragment {
 		void bind(int position, String val, int itemViewType) {
 			mMillItemDefaultBinding.getBaseModel().setText(val);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				mDefaultColor = getResources().getColor(R.color.colorPrimary, Objects.requireNonNull(getActivity()).getTheme());
-				mSelectColor = getResources().getColor(R.color.colorAccent, Objects.requireNonNull(getActivity()).getTheme());
+				mDefaultColor = getResources().getColor(R.color.colorItem, Objects.requireNonNull(getActivity()).getTheme());
+				mSelectColor = getResources().getColor(R.color.colorItemSelect, Objects.requireNonNull(getActivity()).getTheme());
 			}
 			if (itemViewType == mViewTypeDefault) {
 				mMillItemDefaultBinding.getBaseModel().setBackground(mDefaultColor);

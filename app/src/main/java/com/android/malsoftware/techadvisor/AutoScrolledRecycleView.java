@@ -20,16 +20,18 @@ import java.util.concurrent.TimeUnit;
 
 public class AutoScrolledRecycleView extends RecyclerView {
 
+    /**
+     * Кастомная реализация обеспечивает скроллинг вверх и вниз, и отображение выделенной позиции в видимой области RecyclerVIew.
+     */
 
-
-    private int mItemQuantity; //Количество одновременно видимых элементов в RecyclerView.
-    private int mItemCount; //Общее число элементов  в RecyclerView.
-    private List<RecycleRange> mRangesArray = new ArrayList<>(); //Диапазоны значений для скроллинга, для отображения выделенного элемента.
+    private int mItemQuantity; /**Количество одновременно видимых элементов в RecyclerView.*/
+    private int mItemCount; /**Общее число элементов в RecyclerView.*/
+    private List<RecycleRange> mRangesArray = new ArrayList<>(); /**Диапазоны значений для скроллинга, для отображения выделенного элемента.*/
     private int mOldSelectedPosition = 0;
     private int mCurrentSelectedPosition = 0;
     private int mSelectedRange = 0;
     private int mHandScrollDirection = 0;
-    private boolean isHandScrolled = false;
+    private boolean isHandScrolled = false; /** Индикатор скроллинга в ручном режиме.*/
     private final Handler h = new Handler();
     private final int DOWN = 0;
     private final int UP = 1;
@@ -68,11 +70,11 @@ public class AutoScrolledRecycleView extends RecyclerView {
                 if (difY > MAX_VALUE) {
                     mHandScrollDirection = DOWN;
                     mYLastValue = newY;
-                    Log.d("mar2","scrolled Down");
+                    //Log.d("mar2","scrolled Down");
                 } else if (difY < MIN_VALUE) {
                     mHandScrollDirection = UP;
                     mYLastValue = newY;
-                    Log.d("mar2","scrolled Up");
+                    //Log.d("mar2","scrolled Up");
                 }
                 break;
         }
@@ -85,7 +87,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
         for (int i = 0; i < mItemCount; i += mItemQuantity) {
             int minPosition = i;
             int maxPosition;
-            if (i + mItemQuantity < itemCount) maxPosition = i + mItemQuantity;
+            if (i + mItemQuantity < itemCount) maxPosition = i + mItemQuantity -1;
             else maxPosition = itemCount;
             /*Log.d("mar2", "rangeNumber = " + rangeNumber);
             Log.d("mar2", "minPosition = " + minPosition);
@@ -123,6 +125,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
                 //Log.d("mar2", "mSelectedRange = " + regionNumber);
                 break;
             }
+            //Log.d("mar2", "Ranges = " + mRangesArray.size());
         }
     }
 
@@ -144,7 +147,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
                     h.post(action1);
-                    Log.d("mar2", "thread increment started 1");
+                    //Log.d("mar2", "thread increment started 1");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -156,7 +159,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
                     h.post(action2);
-                    Log.d("mar2", "thread scrollDown started 2");
+                    //Log.d("mar2", "thread scrollDown started 2");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -200,38 +203,37 @@ public class AutoScrolledRecycleView extends RecyclerView {
 
     private Runnable scrollDown = () -> {
         {
-            if (isHandScrolled) {
-                if (mHandScrollDirection == DOWN) {
-                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
-                }
-                if (mHandScrollDirection == UP) {
-                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
-                }
-            } else {
+            if (isHandScrolled()) {
                 if (mSelectedRange == 0) {
                     smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
-                } else smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
+                } else
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
             }
-            isHandScrolled = false;
         }
     };
 
     private Runnable scrollUp = () -> {
         {
-            if (isHandScrolled) {
-                if (mHandScrollDirection == DOWN) {
-                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
-                }
-                if (mHandScrollDirection == UP) {
-                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
-                }
-            } else {
-                if (mSelectedRange == mRangesArray.size() - 1) {
+            if (isHandScrolled()) {
+                if (mSelectedRange == mRangesArray.size()-1) {
                     smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
                 } else
                     smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
             }
-            isHandScrolled = false;
         }
     };
+
+    private boolean isHandScrolled() {
+        if (isHandScrolled) {
+            if (mHandScrollDirection == DOWN) {
+                smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
+            }
+            if (mHandScrollDirection == UP) {
+                smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
+            }
+            isHandScrolled = false;
+            return false;
+        }
+        return true;
+    }
 }
