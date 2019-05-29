@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -57,15 +58,12 @@ public class MainMenuFragment extends Fragment {
 		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity());
 		mAutoScrolledRecycleView.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
+		Button btn2 = rootView.findViewById(R.id.button);
 		getViewSize(mAutoScrolledRecycleView);
 		updateUi();
 
-		btn.setOnClickListener(new View.OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				mAutoScrolledRecycleView.incrementSelectedPosition();
-			}
-		});
+		btn.setOnClickListener(v -> mAutoScrolledRecycleView.decrementSelectedPosition());
+		btn2.setOnClickListener(v -> mAutoScrolledRecycleView.incrementSelectedPosition());
 
 		return rootView;
 	}

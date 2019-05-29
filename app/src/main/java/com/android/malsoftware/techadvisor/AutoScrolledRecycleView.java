@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.View;
+import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,20 +20,69 @@ import java.util.concurrent.TimeUnit;
 
 public class AutoScrolledRecycleView extends RecyclerView {
 
-    private int mItemQuantity;
-    private int mItemCount;
-    private List<RecycleRange> mRangesArray = new ArrayList<>();
+
+
+    private int mItemQuantity; //Количество одновременно видимых элементов в RecyclerView.
+    private int mItemCount; //Общее число элементов  в RecyclerView.
+    private List<RecycleRange> mRangesArray = new ArrayList<>(); //Диапазоны значений для скроллинга, для отображения выделенного элемента.
     private int mOldSelectedPosition = 0;
     private int mCurrentSelectedPosition = 0;
     private int mSelectedRange = 0;
+    private int mHandScrollDirection = 0;
+    private boolean isHandScrolled = false;
     private final Handler h = new Handler();
-    private boolean mHandScrolled = false;
+    private final int DOWN = 0;
+    private final int UP = 1;
+    private int mYLastValue = 0;
+
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent iEv) {
+        if (isEnabled()) {
+            processEvent(iEv);
+            super.dispatchTouchEvent(iEv);
+            return true; //to keep receive event that follow down event
+        }
+
+        return super.dispatchTouchEvent(iEv);
+    }
+
+    private void processEvent(final MotionEvent iEv) {
+        switch (iEv.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                //Log.d("mar2","scrolled Down");
+                mYLastValue = (int) iEv.getY();
+                break;
+
+            case MotionEvent.ACTION_UP:
+                //Log.d("mar2","scrolled Up");
+                isHandScrolled = true;
+                mYLastValue = (int) iEv.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                int newY = (int) iEv.getY();
+                int difY = mYLastValue - newY;
+
+                int MAX_VALUE = 20;
+                int MIN_VALUE = -20;
+                if (difY > MAX_VALUE) {
+                    mHandScrollDirection = DOWN;
+                    mYLastValue = newY;
+                    Log.d("mar2","scrolled Down");
+                } else if (difY < MIN_VALUE) {
+                    mHandScrollDirection = UP;
+                    mYLastValue = newY;
+                    Log.d("mar2","scrolled Up");
+                }
+                break;
+        }
+    }
 
     public void initRanges(int itemQuantity, int itemCount) {
         mItemQuantity = itemQuantity;
         mItemCount = itemCount;
         int rangeNumber = 0;
-        for (int i = 0; i < mItemCount; i+= mItemQuantity) {
+        for (int i = 0; i < mItemCount; i += mItemQuantity) {
             int minPosition = i;
             int maxPosition;
             if (i + mItemQuantity < itemCount) maxPosition = i + mItemQuantity;
@@ -82,24 +131,32 @@ public class AutoScrolledRecycleView extends RecyclerView {
     }
 
     public void incrementSelectedPosition() {
-        final Thread tt = new Thread(new Runnable() {
-            public void run() {
+        doActions(increment, scrollDown);
+    }
+
+    public void decrementSelectedPosition() {
+        doActions(decrement, scrollUp);
+    }
+
+    private void doActions(Runnable action1, Runnable action2) {
+        final Thread actionIncrementPosition = new Thread(() -> {
+            {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
-                    h.post(increment);
-                    Log.d("mar2","thread increment started 1");
+                    h.post(action1);
+                    Log.d("mar2", "thread increment started 1");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }
         });
 
-        final Thread t = new Thread(new Runnable() {
-            public void run() {
+        final Thread actionAutoScroll = new Thread(() -> {
+            {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
-                    h.post(scrollDown);
-                    Log.d("mar2","thread scrollDown started 2");
+                    h.post(action2);
+                    Log.d("mar2", "thread scrollDown started 2");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -108,24 +165,22 @@ public class AutoScrolledRecycleView extends RecyclerView {
 
         Executor tpe = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-        tpe.execute(new Runnable() {
-            @Override
-            public void run() {
-                tt.start();
+        tpe.execute(() -> {
+            {
+                actionIncrementPosition.start();
                 try {
-                    TimeUnit.MILLISECONDS.sleep(50);
+                    TimeUnit.MILLISECONDS.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                t.start();
+                actionAutoScroll.start();
             }
         });
     }
 
-    Runnable increment= new Runnable() {
-        @Override
-        public void run() {
-            if (mCurrentSelectedPosition + 1 > mItemCount -1) {
+    private Runnable increment = () -> {
+        {
+            if (mCurrentSelectedPosition + 1 > mItemCount - 1) {
                 setSelectedPosition(0);
             } else {
                 setSelectedPosition(mCurrentSelectedPosition + 1);
@@ -133,22 +188,50 @@ public class AutoScrolledRecycleView extends RecyclerView {
         }
     };
 
-    Runnable scrollDown = new Runnable() {
-        public void run() {
-            if (mHandScrolled) {
-                smoothScrollToPosition(mCurrentSelectedPosition);
-                mHandScrolled = false;
+    private Runnable decrement = () -> {
+        {
+            if (mCurrentSelectedPosition - 1 < 0) {
+                setSelectedPosition(mItemCount - 1);
+            } else {
+                setSelectedPosition(mCurrentSelectedPosition - 1);
+            }
+        }
+    };
+
+    private Runnable scrollDown = () -> {
+        {
+            if (isHandScrolled) {
+                if (mHandScrollDirection == DOWN) {
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
+                }
+                if (mHandScrollDirection == UP) {
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
+                }
             } else {
                 if (mSelectedRange == 0) {
                     smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
                 } else smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
             }
+            isHandScrolled = false;
         }
     };
 
-    @Override
-    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-        super.onScrollChanged(l, t, oldl, oldt);
-        mHandScrolled = true;
-    }
+    private Runnable scrollUp = () -> {
+        {
+            if (isHandScrolled) {
+                if (mHandScrollDirection == DOWN) {
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
+                }
+                if (mHandScrollDirection == UP) {
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
+                }
+            } else {
+                if (mSelectedRange == mRangesArray.size() - 1) {
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
+                } else
+                    smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
+            }
+            isHandScrolled = false;
+        }
+    };
 }
