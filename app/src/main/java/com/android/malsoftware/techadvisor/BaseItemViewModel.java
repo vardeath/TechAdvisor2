@@ -11,9 +11,14 @@ import androidx.databinding.ObservableInt;
 public class BaseItemViewModel extends BaseObservable {
 
 	private ObservableField<String> mText = new ObservableField<>();
+	private ObservableField<String> mDescription = new ObservableField<>();
 	private ObservableInt mBackground = new ObservableInt();
 	private int position;
 	private AutoScrolledRecycleView mAutoScrolledRecycleView;
+
+	public ObservableField<String> getDescription() {
+		return mDescription;
+	}
 
 	public ObservableField<String> getText() {
 		return mText;
@@ -45,5 +50,10 @@ public class BaseItemViewModel extends BaseObservable {
 
 	void setAutoScrolledRecycleView(AutoScrolledRecycleView autoScrolledRecycleView) {
 		mAutoScrolledRecycleView = autoScrolledRecycleView;
+	}
+
+	@Bindable
+    void setDescription(String value) {
+		mDescription.set(value);
 	}
 }

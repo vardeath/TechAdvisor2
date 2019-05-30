@@ -3,4 +3,27 @@
     <string name="up">up</string>
     <string name="down">down</string>
     <string name="textview">TextView</string>
+
+
+    <string name="Mill_Diameter_Description">Диаметр фрезы "\n" D, мм.</string>
+    <string name="Mill_Cutting_Speed_Description">Скорость резания "\n" Vc, м/мин.</string>
+    <string name="Mill_Revolution_Description">Число оборотов "\n" n, об/мин.</string>
+    <string name="Mill_Teeth_Quantity_Description">Число режущих кромок "\n" z, шт.</string>
+    <string name="Mill_Feed_Per_Tooth_Description">Подача на зуб "\n" fz, мм.</string>
+    <string name="Mill_Minute_Feed_Description">Минутная подача "\n" Fмин, мм/мин.</string>
+    <string name="Mill_Revolution_Feed_Description">Подача на оборот "\n" Fоб, мм/об.</string>
+    <string name="Mill_Cutting_Depth_Description">Глубина фрезерования "\n" Ap, мм.</string>
+    <string name="Mill_Cutting_Width_Description">Ширина фрезерования "\n" Ae, мм.</string>
+    <string name="Mill_General_Angle_Description">Угол в плане "\n" a, град.</string>
+    <string name="Mill_Path_Length_Description">Длина пути фрезы "\n" L, мм/мин.</string>
+    <string name="Mill_Tool_Length_Description">Вылет инструмента "\n" Lвыл, мм/мин.</string>
+    <string name="Mill_Front_Angle_Description">Передний угол "\n" у, град.</string>
+    <string name="Mill_Average_Chips_Width_Description">Средняя толщина стружки "\n" hм, мм.</string>
+
+    <string name="Output_Description">Параметр | Единица измерения</string>
+
+    <string name="Mill_Specific_Material_Removal_Description">Удельный сьём материала | cm3/мин.</string>
+    <string name="Mill_Cutting_Time_Description">Время обработки | мин.</string>
+    <string name="Mill_Moment_Description">Момент | Н*м.</string>
+    <string name="Mill_Power_Description">Требуемая мощность | кВт.</string>
 </resources>

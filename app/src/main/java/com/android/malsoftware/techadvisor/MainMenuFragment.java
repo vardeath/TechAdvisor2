@@ -27,9 +27,11 @@ import java.util.Objects;
 
 public class MainMenuFragment extends Fragment {
 
-	private List<String> mItemsArray = new ArrayList<>();
+	//private List<String> mItemsArray = new ArrayList<>();
 	private MainMenuAdaptor mainMenuAdaptor;
 	private View rootView;
+	private MillDetailValues mMillDetailValues;
+	private DescriptionsPresets mDescriptionsPresets;
 
 	private AutoScrolledRecycleView mAutoScrolledRecycleView;
 
@@ -44,9 +46,12 @@ public class MainMenuFragment extends Fragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		for (int i = 0; i < 5; ++i) {
+		mMillDetailValues = MillDetailValues.newInstance(getContext());
+		mDescriptionsPresets = DescriptionsPresets.newInstance(getContext());
+		mMillDetailValues.getPairsArray().size();
+		/*for (int i = 0; i < 10; ++i) {
 			mItemsArray.add("item" + i);
-		}
+		}*/
 	}
 
 	@Nullable
@@ -80,8 +85,8 @@ public class MainMenuFragment extends Fragment {
 			mMillItemDefaultBinding.setBaseModel(new BaseItemViewModel());
 		}
 
-		void bind(int position, String val, int itemViewType) {
-			mMillItemDefaultBinding.getBaseModel().setText(val);
+		void bind(int position, MillDetailValues val, int itemViewType) {
+			mMillItemDefaultBinding.getBaseModel().setText(String.valueOf(val.getPairsArray().get(position).getValue()));
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 				mDefaultColor = getResources().getColor(R.color.colorItem, Objects.requireNonNull(getActivity()).getTheme());
 				mSelectColor = getResources().getColor(R.color.colorItemSelect, Objects.requireNonNull(getActivity()).getTheme());
@@ -92,17 +97,18 @@ public class MainMenuFragment extends Fragment {
 				mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
 			}
 			mMillItemDefaultBinding.getBaseModel().setPosition(position);
+			mMillItemDefaultBinding.getBaseModel().setDescription(String.valueOf(mDescriptionsPresets.getStringDescriptoin(val.getPairsArray().get(position).getFieldType())));
 			mMillItemDefaultBinding.getBaseModel().setAutoScrolledRecycleView(mAutoScrolledRecycleView);
 		}
 	}
 
 	private class MainMenuAdaptor extends AutoScrolledRecycleView.Adapter<MainMenuHolder> {
 
-		private List<String> Array;
+		private MillDetailValues Array;
 		private MillItemDefaultBinding mMillItemDefaultBinding;
 		private AutoScrolledRecycleView mAutoScrolledRecycleView;
 
-		MainMenuAdaptor(List<String> Array) {
+		MainMenuAdaptor(MillDetailValues Array) {
 			this.Array = Array;
 		}
 
@@ -125,12 +131,12 @@ public class MainMenuFragment extends Fragment {
 
 		@Override
 		public void onBindViewHolder(@NonNull MainMenuHolder holder, int position) {
-			holder.bind(position, Array.get(position), getItemViewType(position));
+			holder.bind(position, mMillDetailValues, getItemViewType(position));
 		}
 
 		@Override
 		public int getItemCount() {
-			return mItemsArray.size();
+			return mMillDetailValues.getPairsArray().size();
 		}
 
 		@Override
@@ -141,7 +147,7 @@ public class MainMenuFragment extends Fragment {
 	}
 
 	private void updateUi() {
-		mainMenuAdaptor = new MainMenuAdaptor(mItemsArray);
+		mainMenuAdaptor = new MainMenuAdaptor(mMillDetailValues);
 		mAutoScrolledRecycleView.setAdapter(mainMenuAdaptor);
 		Objects.requireNonNull(mAutoScrolledRecycleView.getItemAnimator()).setChangeDuration(0);
 	}
@@ -161,7 +167,7 @@ public class MainMenuFragment extends Fragment {
 					final int itemHeight = (int) (linearLayout.getMeasuredHeight() + getResources().getDimension(R.dimen.offcet));
 					final int itemQuantity = (int) Math.floor((double) viewHeight / (double) itemHeight) - 1;
 
-					mAutoScrolledRecycleView.initRanges(itemQuantity, mItemsArray.size());
+					mAutoScrolledRecycleView.initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
 
 					Log.d("mar2", "itemQuantity = " + itemQuantity);
 					Log.d("mar2", "itemHeight = " + viewHeight);

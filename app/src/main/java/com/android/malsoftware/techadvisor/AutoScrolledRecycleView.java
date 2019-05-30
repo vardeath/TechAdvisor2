@@ -3,7 +3,6 @@ package com.android.malsoftware.techadvisor;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
@@ -31,7 +30,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
     private int mCurrentSelectedPosition = 0;
     private int mSelectedRange = 0;
     private int mHandScrollDirection = 0;
-    private boolean isHandScrolled = false; /** Индикатор скроллинга в ручном режиме.*/
+    private boolean mHandScrolled = false; /** Индикатор скроллинга в ручном режиме.*/
     private final Handler h = new Handler();
     private final int DOWN = 0;
     private final int UP = 1;
@@ -58,7 +57,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
 
             case MotionEvent.ACTION_UP:
                 //Log.d("mar2","scrolled Up");
-                isHandScrolled = true;
+                mHandScrolled = true;
                 mYLastValue = (int) iEv.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -141,12 +140,12 @@ public class AutoScrolledRecycleView extends RecyclerView {
         doActions(decrement, scrollUp);
     }
 
-    private void doActions(Runnable action1, Runnable action2) {
+    private void doActions(Runnable changePosition, Runnable actionScroll) {
         final Thread actionIncrementPosition = new Thread(() -> {
             {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
-                    h.post(action1);
+                    h.post(changePosition);
                     //Log.d("mar2", "thread increment started 1");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
@@ -158,7 +157,7 @@ public class AutoScrolledRecycleView extends RecyclerView {
             {
                 try {
                     TimeUnit.MILLISECONDS.sleep(1);
-                    h.post(action2);
+                    h.post(actionScroll);
                     //Log.d("mar2", "thread scrollDown started 2");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
@@ -224,14 +223,14 @@ public class AutoScrolledRecycleView extends RecyclerView {
     };
 
     private boolean isHandScrolled() {
-        if (isHandScrolled) {
+        if (mHandScrolled) {
             if (mHandScrollDirection == DOWN) {
                 smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMinPosition());
             }
             if (mHandScrollDirection == UP) {
                 smoothScrollToPosition(mRangesArray.get(mSelectedRange).getMaxPosition());
             }
-            isHandScrolled = false;
+            mHandScrolled = false;
             return false;
         }
         return true;
