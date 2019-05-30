@@ -1,6 +1,5 @@
 package com.android.malsoftware.techadvisor;
 
-import android.graphics.drawable.Animatable2;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,7 +12,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,8 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 public class MainMenuFragment extends Fragment {
@@ -97,7 +93,7 @@ public class MainMenuFragment extends Fragment {
 				mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
 			}
 			mMillItemDefaultBinding.getBaseModel().setPosition(position);
-			mMillItemDefaultBinding.getBaseModel().setDescription(String.valueOf(mDescriptionsPresets.getStringDescriptoin(val.getPairsArray().get(position).getFieldType())));
+			mMillItemDefaultBinding.getBaseModel().setDescription(mDescriptionsPresets.getStringDescription(val.getPairsArray().get(position).getFieldType()));
 			mMillItemDefaultBinding.getBaseModel().setAutoScrolledRecycleView(mAutoScrolledRecycleView);
 		}
 	}

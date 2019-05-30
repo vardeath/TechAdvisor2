@@ -11,7 +11,7 @@ public class DescriptionsPresets {
     private Context mContext;
     @SuppressLint("StaticFieldLeak")
     private static DescriptionsPresets sDescriptionsPresets;
-    private HashMap <String, String> mGeneralPreset = new HashMap<>();
+    private HashMap <FieldType, String> mGeneralPreset = new HashMap<>();
 
     public static DescriptionsPresets newInstance(Context context) {
         if (sDescriptionsPresets == null)
@@ -41,14 +41,11 @@ public class DescriptionsPresets {
         return mContext.getResources().getString(id);
     }
 
-    private String getStringValue(FieldType type) {
-        return type.toString();
-    }
     private void putHashMap (FieldType fieldType, int id) {
-        mGeneralPreset.put(getStringValue(fieldType), getStringValue(id));
+        mGeneralPreset.put((fieldType), getStringValue(id));
     }
 
-    public String getStringDescriptoin(FieldType fieldType) {
-        return mGeneralPreset.get(fieldType.toString());
+    String getStringDescription(FieldType fieldType) {
+        return mGeneralPreset.get(fieldType);
     }
 }
