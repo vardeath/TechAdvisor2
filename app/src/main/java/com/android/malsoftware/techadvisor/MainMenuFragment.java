@@ -1,8 +1,14 @@
 package com.android.malsoftware.techadvisor;
 
+import android.app.ActionBar;
+import android.graphics.Color;
+import android.graphics.PointF;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,24 +20,24 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
 
 import java.util.Objects;
 
+import static android.view.View.X;
+import static android.view.View.Y;
+
 public class MainMenuFragment extends Fragment {
 
-	//private List<String> mItemsArray = new ArrayList<>();
-	private MainMenuAdaptor mainMenuAdaptor;
 	private View rootView;
 	private MillDetailValues mMillDetailValues;
 	private DescriptionsPresets mDescriptionsPresets;
-
 	private AutoScrolledRecycleView mAutoScrolledRecycleView;
-
-
 	private static final int mViewTypeDefault = 0;
 	private static final int mViewTypSelected = 1;
 
@@ -45,9 +51,6 @@ public class MainMenuFragment extends Fragment {
 		mMillDetailValues = MillDetailValues.newInstance(getContext());
 		mDescriptionsPresets = DescriptionsPresets.newInstance(getContext());
 		mMillDetailValues.getPairsArray().size();
-		/*for (int i = 0; i < 10; ++i) {
-			mItemsArray.add("item" + i);
-		}*/
 	}
 
 	@Nullable
@@ -56,7 +59,23 @@ public class MainMenuFragment extends Fragment {
 		rootView = inflater.inflate(R.layout.menu_main_fragment, container, false);
 
 		mAutoScrolledRecycleView = (AutoScrolledRecycleView) rootView.findViewById(R.id.main_resycleview);
-		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity());
+		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity()) {
+			@Override
+			public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+				LinearSmoothScroller smoothScroller = new LinearSmoothScroller(Objects.requireNonNull(getContext())) {
+
+					private static final float SPEED = 50f;// Change this value (default=25f)
+
+					@Override
+					protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+						return SPEED / displayMetrics.densityDpi;
+					}
+
+				};
+				smoothScroller.setTargetPosition(position);
+				startSmoothScroll(smoothScroller);
+			}
+		};
 		mAutoScrolledRecycleView.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
 		Button btn2 = rootView.findViewById(R.id.button);
@@ -82,7 +101,7 @@ public class MainMenuFragment extends Fragment {
 		}
 
 		void bind(int position, MillDetailValues val, int itemViewType) {
-			mMillItemDefaultBinding.getBaseModel().setText(String.valueOf(val.getPairsArray().get(position).getValue()));
+			Objects.requireNonNull(mMillItemDefaultBinding.getBaseModel()).setText(String.valueOf(val.getPairsArray().get(position).getValue()));
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 				mDefaultColor = getResources().getColor(R.color.colorItem, Objects.requireNonNull(getActivity()).getTheme());
 				mSelectColor = getResources().getColor(R.color.colorItemSelect, Objects.requireNonNull(getActivity()).getTheme());
@@ -143,9 +162,11 @@ public class MainMenuFragment extends Fragment {
 	}
 
 	private void updateUi() {
-		mainMenuAdaptor = new MainMenuAdaptor(mMillDetailValues);
+		MainMenuAdaptor mainMenuAdaptor = new MainMenuAdaptor(mMillDetailValues);
 		mAutoScrolledRecycleView.setAdapter(mainMenuAdaptor);
 		Objects.requireNonNull(mAutoScrolledRecycleView.getItemAnimator()).setChangeDuration(0);
+		mAutoScrolledRecycleView.setVerticalScrollBarEnabled(true);
+		mAutoScrolledRecycleView.setScrollbarFadingEnabled(false);
 	}
 
 	private void getViewSize(final View view) {

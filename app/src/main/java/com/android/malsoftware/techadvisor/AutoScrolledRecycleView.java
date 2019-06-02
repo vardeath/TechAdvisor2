@@ -12,30 +12,32 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class AutoScrolledRecycleView extends RecyclerView {
 
-    /**
-     * Кастомная реализация обеспечивает скроллинг вверх и вниз, и отображение выделенной позиции в видимой области RecyclerVIew.
-     */
+	/**Общее число элементов в RecyclerView.*/
+    private int mItemCount;
 
-    private int mItemQuantity; /**Количество одновременно видимых элементов в RecyclerView.*/
-    private int mItemCount; /**Общее число элементов в RecyclerView.*/
-    private List<RecycleRange> mRangesArray = new ArrayList<>(); /**Диапазоны значений для скроллинга, для отображения выделенного элемента.*/
+	/**Диапазоны значений для видимых областей скроллинга, текущий выделенны элемент отображается
+	 * в пределах диапазона области.*/
+    private List<RecycleRange> mRangesArray = new ArrayList<>();
+
+
     private int mOldSelectedPosition = 0;
     private int mCurrentSelectedPosition = 0;
     private int mSelectedRange = 0;
-    private int mHandScrollDirection = 0;
+    private int mHandScrollDirection;
     private boolean mHandScrolled = false; /** Индикатор скроллинга в ручном режиме.*/
     private final Handler h = new Handler();
     private final int DOWN = 0;
     private final int UP = 1;
     private int mYLastValue = 0;
 
+    public void setHandScrolled(boolean handScrolled) {
+        mHandScrolled = handScrolled;
+        mHandScrollDirection = UP;
+    }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent iEv) {
@@ -51,12 +53,10 @@ public class AutoScrolledRecycleView extends RecyclerView {
     private void processEvent(final MotionEvent iEv) {
         switch (iEv.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                //Log.d("mar2","scrolled Down");
                 mYLastValue = (int) iEv.getY();
                 break;
 
             case MotionEvent.ACTION_UP:
-                //Log.d("mar2","scrolled Up");
                 mHandScrolled = true;
                 mYLastValue = (int) iEv.getY();
                 break;
@@ -69,32 +69,28 @@ public class AutoScrolledRecycleView extends RecyclerView {
                 if (difY > MAX_VALUE) {
                     mHandScrollDirection = DOWN;
                     mYLastValue = newY;
-                    //Log.d("mar2","scrolled Down");
                 } else if (difY < MIN_VALUE) {
                     mHandScrollDirection = UP;
                     mYLastValue = newY;
-                    //Log.d("mar2","scrolled Up");
                 }
                 break;
         }
     }
 
     public void initRanges(int itemQuantity, int itemCount) {
-        mItemQuantity = itemQuantity;
+        /*
+          Кастомная реализация обеспечивает скроллинг вверх и вниз, и отображение выделенной позиции
+          в видимой области RecyclerVIew.
+         */
         mItemCount = itemCount;
         int rangeNumber = 0;
-        for (int i = 0; i < mItemCount; i += mItemQuantity) {
-            int minPosition = i;
+        for (int i = 0; i < mItemCount; i += itemQuantity) {
             int maxPosition;
-            if (i + mItemQuantity < itemCount) maxPosition = i + mItemQuantity -1;
+            if (i + itemQuantity < itemCount) maxPosition = i + itemQuantity -1;
             else maxPosition = itemCount;
-            /*Log.d("mar2", "rangeNumber = " + rangeNumber);
-            Log.d("mar2", "minPosition = " + minPosition);
-            Log.d("mar2", "maxPosition = " + maxPosition);*/
-            RecycleRange element = new RecycleRange(rangeNumber, minPosition, maxPosition);
+            RecycleRange element = new RecycleRange(rangeNumber, i, maxPosition);
             mRangesArray.add(element);
             ++rangeNumber;
-            //Log.d("mar2", "mItemQuantity = " + mItemQuantity);
         }
     }
 
@@ -113,19 +109,21 @@ public class AutoScrolledRecycleView extends RecyclerView {
     public void setSelectedPosition(int position) {
         mOldSelectedPosition = mCurrentSelectedPosition;
         mCurrentSelectedPosition = position;
-        Objects.requireNonNull(getAdapter()).notifyItemChanged(mCurrentSelectedPosition);
-        Objects.requireNonNull(getAdapter()).notifyItemChanged(mOldSelectedPosition);
         for (int i = 0; i < mRangesArray.size(); ++i) {
             int minPosition = mRangesArray.get(i).getMinPosition();
             int maxPosition = mRangesArray.get(i).getMaxPosition();
             int regionNumber = mRangesArray.get(i).getRegionNumber();
             if (mCurrentSelectedPosition >= minPosition && mCurrentSelectedPosition <= maxPosition) {
                 mSelectedRange = regionNumber;
-                //Log.d("mar2", "mSelectedRange = " + regionNumber);
                 break;
             }
-            //Log.d("mar2", "Ranges = " + mRangesArray.size());
         }
+        if (mHandScrolled) applySelectedPosition();
+    }
+
+    private void applySelectedPosition() {
+        Objects.requireNonNull(getAdapter()).notifyItemChanged(mCurrentSelectedPosition);
+        Objects.requireNonNull(getAdapter()).notifyItemChanged(mOldSelectedPosition);
     }
 
     public int getCurrentSelectedPosition() {
@@ -133,72 +131,42 @@ public class AutoScrolledRecycleView extends RecyclerView {
     }
 
     public void incrementSelectedPosition() {
-        doActions(increment, scrollDown);
+
+        if (mCurrentSelectedPosition + 1 > mItemCount - 1) {
+            setSelectedPosition(0);
+        } else {
+            setSelectedPosition(mCurrentSelectedPosition + 1);
+        }
+
+        doAutoScroll(scrollDown);
+        applySelectedPosition();
     }
 
     public void decrementSelectedPosition() {
-        doActions(decrement, scrollUp);
+
+        if (mCurrentSelectedPosition - 1 < 0) {
+            setSelectedPosition(mItemCount - 1);
+        } else {
+            setSelectedPosition(mCurrentSelectedPosition - 1);
+        }
+
+        doAutoScroll(scrollUp);
+        applySelectedPosition();
     }
 
-    private void doActions(Runnable changePosition, Runnable actionScroll) {
-        final Thread actionIncrementPosition = new Thread(() -> {
-            {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(1);
-                    h.post(changePosition);
-                    //Log.d("mar2", "thread increment started 1");
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
+    private void doAutoScroll(Runnable actionScroll) {
         final Thread actionAutoScroll = new Thread(() -> {
             {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(1);
+                    TimeUnit.MILLISECONDS.sleep(10);
                     h.post(actionScroll);
-                    //Log.d("mar2", "thread scrollDown started 2");
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }
         });
-
-        Executor tpe = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-
-        tpe.execute(() -> {
-            {
-                actionIncrementPosition.start();
-                try {
-                    TimeUnit.MILLISECONDS.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                actionAutoScroll.start();
-            }
-        });
+        actionAutoScroll.start();
     }
-
-    private Runnable increment = () -> {
-        {
-            if (mCurrentSelectedPosition + 1 > mItemCount - 1) {
-                setSelectedPosition(0);
-            } else {
-                setSelectedPosition(mCurrentSelectedPosition + 1);
-            }
-        }
-    };
-
-    private Runnable decrement = () -> {
-        {
-            if (mCurrentSelectedPosition - 1 < 0) {
-                setSelectedPosition(mItemCount - 1);
-            } else {
-                setSelectedPosition(mCurrentSelectedPosition - 1);
-            }
-        }
-    };
 
     private Runnable scrollDown = () -> {
         {
