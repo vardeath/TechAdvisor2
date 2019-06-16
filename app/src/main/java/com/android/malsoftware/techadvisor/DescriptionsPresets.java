@@ -7,13 +7,13 @@ import java.util.HashMap;
 
 import static com.android.malsoftware.techadvisor.FieldType.*;
 
-public class DescriptionsPresets {
+class DescriptionsPresets {
     private Context mContext;
     @SuppressLint("StaticFieldLeak")
     private static DescriptionsPresets sDescriptionsPresets;
     private HashMap <FieldType, String> mGeneralPreset = new HashMap<>();
 
-    public static DescriptionsPresets newInstance(Context context) {
+    static DescriptionsPresets newInstance(Context context) {
         if (sDescriptionsPresets == null)
             sDescriptionsPresets = new DescriptionsPresets(context);
         return sDescriptionsPresets;
@@ -35,6 +35,10 @@ public class DescriptionsPresets {
         putHashMap(MillToolLength, R.string.Mill_Tool_Length_Description);
         putHashMap(MillAttackAngle, R.string.Mill_Front_Angle_Description);
         putHashMap(MillAverageChipWidth, R.string.Mill_Average_Chips_Width_Description);
+        putHashMap(MillSpecificMaterialRemoval, R.string.Mill_Specific_Material_Removal_Description);
+        putHashMap(MillCuttingTime, R.string.Mill_Cutting_Time_Description);
+        putHashMap(MillMoment, R.string.Mill_Moment_Description);
+        putHashMap(MillPower, R.string.Mill_Power_Description);
     }
 
     private String getStringValue(int id) {

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.android.malsoftware.techadvisor.AutoScrolledRecycleView
+    <com.android.malsoftware.techadvisor.RecycleViewScroll
         android:id="@+id/main_resycleview"
         android:layout_width="0dp"
         android:layout_height="0dp"

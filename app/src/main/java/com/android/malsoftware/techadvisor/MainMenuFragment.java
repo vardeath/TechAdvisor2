@@ -1,45 +1,38 @@
 package com.android.malsoftware.techadvisor;
 
-import android.app.ActionBar;
-import android.graphics.Color;
-import android.graphics.PointF;
-import android.graphics.drawable.ColorDrawable;
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.LinearLayout;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
-
 import java.util.Objects;
 
-import static android.view.View.X;
-import static android.view.View.Y;
 
 public class MainMenuFragment extends Fragment {
 
-	private View rootView;
-	private MillDetailValues mMillDetailValues;
-	private DescriptionsPresets mDescriptionsPresets;
-	private AutoScrolledRecycleView mAutoScrolledRecycleView;
+	private Context mContext = null;
+	private View rootView = null;
+	private MillDetailValues mMillDetailValues = null;
+	private DescriptionsPresets mDescriptionsPresets = null;
+	private RecycleViewScroll mRecycleViewScroll = null;
 	private static final int mViewTypeDefault = 0;
 	private static final int mViewTypSelected = 1;
+
+	private int mDefaultColor;
+	private int mSelectColor;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -48,21 +41,29 @@ public class MainMenuFragment extends Fragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mMillDetailValues = MillDetailValues.newInstance(getContext());
-		mDescriptionsPresets = DescriptionsPresets.newInstance(getContext());
-		mMillDetailValues.getPairsArray().size();
+		mContext = getContext();
+		mMillDetailValues = MillDetailValues.newInstance(mContext);
+		mDescriptionsPresets = DescriptionsPresets.newInstance(mContext);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			mDefaultColor = getResources().getColor(R.color.colorItem,
+					(Objects.requireNonNull(getActivity())).getTheme());
+			mSelectColor = getResources().getColor(R.color.colorItemSelect,
+					Objects.requireNonNull(getActivity()).getTheme());
+		}
 	}
 
 	@Nullable
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+	                         @Nullable Bundle savedInstanceState) {
 		rootView = inflater.inflate(R.layout.menu_main_fragment, container, false);
 
-		mAutoScrolledRecycleView = (AutoScrolledRecycleView) rootView.findViewById(R.id.main_resycleview);
+		mRecycleViewScroll = rootView.findViewById(R.id.main_resycleview);
 		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity()) {
 			@Override
-			public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
-				LinearSmoothScroller smoothScroller = new LinearSmoothScroller(Objects.requireNonNull(getContext())) {
+			public void smoothScrollToPosition(RecyclerView recyclerView,
+			                                   RecyclerView.State state, int position) {
+				LinearSmoothScroller smoothScroller = new LinearSmoothScroller(mContext) {
 
 					private static final float SPEED = 50f;// Change this value (default=25f)
 
@@ -76,14 +77,14 @@ public class MainMenuFragment extends Fragment {
 				startSmoothScroll(smoothScroller);
 			}
 		};
-		mAutoScrolledRecycleView.setLayoutManager(mLayManager);
+		mRecycleViewScroll.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
 		Button btn2 = rootView.findViewById(R.id.button);
-		getViewSize(mAutoScrolledRecycleView);
+		defineViewSize(mRecycleViewScroll);
 		updateUi();
 
-		btn.setOnClickListener(v -> mAutoScrolledRecycleView.decrementSelectedPosition());
-		btn2.setOnClickListener(v -> mAutoScrolledRecycleView.incrementSelectedPosition());
+		btn.setOnClickListener(v -> mRecycleViewScroll.decrementSelectedPosition());
+		btn2.setOnClickListener(v -> mRecycleViewScroll.incrementSelectedPosition());
 
 		return rootView;
 	}
@@ -91,8 +92,6 @@ public class MainMenuFragment extends Fragment {
 	private class MainMenuHolder extends RecyclerView.ViewHolder{
 
 		private MillItemDefaultBinding mMillItemDefaultBinding;
-		private int mDefaultColor;
-		private int mSelectColor;
 
 		MainMenuHolder(MillItemDefaultBinding millItemDefaultBinding) {
 			super(millItemDefaultBinding.getRoot());
@@ -101,27 +100,30 @@ public class MainMenuFragment extends Fragment {
 		}
 
 		void bind(int position, MillDetailValues val, int itemViewType) {
-			Objects.requireNonNull(mMillItemDefaultBinding.getBaseModel()).setText(String.valueOf(val.getPairsArray().get(position).getValue()));
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				mDefaultColor = getResources().getColor(R.color.colorItem, Objects.requireNonNull(getActivity()).getTheme());
-				mSelectColor = getResources().getColor(R.color.colorItemSelect, Objects.requireNonNull(getActivity()).getTheme());
+			if (mMillItemDefaultBinding != null) {
+				mMillItemDefaultBinding.getBaseModel().setText(val.getStringFieldValue(position));
+				if (itemViewType == mViewTypeDefault) {
+					mMillItemDefaultBinding.getBaseModel().setBackground(mDefaultColor);
+				} else {
+					mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
+				}
+				mMillItemDefaultBinding.getBaseModel().setPosition(position);
+				mMillItemDefaultBinding.getBaseModel().
+						setDescription(mDescriptionsPresets.
+								getStringDescription(val.
+										getPairsArray().
+										get(position).
+										getFieldType()));
+				mMillItemDefaultBinding.getBaseModel().setRecycleViewScroll(mRecycleViewScroll);
 			}
-			if (itemViewType == mViewTypeDefault) {
-				mMillItemDefaultBinding.getBaseModel().setBackground(mDefaultColor);
-			} else {
-				mMillItemDefaultBinding.getBaseModel().setBackground(mSelectColor);
-			}
-			mMillItemDefaultBinding.getBaseModel().setPosition(position);
-			mMillItemDefaultBinding.getBaseModel().setDescription(mDescriptionsPresets.getStringDescription(val.getPairsArray().get(position).getFieldType()));
-			mMillItemDefaultBinding.getBaseModel().setAutoScrolledRecycleView(mAutoScrolledRecycleView);
 		}
 	}
 
-	private class MainMenuAdaptor extends AutoScrolledRecycleView.Adapter<MainMenuHolder> {
+	protected class MainMenuAdaptor extends RecycleViewScroll.Adapter<MainMenuHolder> {
 
 		private MillDetailValues Array;
 		private MillItemDefaultBinding mMillItemDefaultBinding;
-		private AutoScrolledRecycleView mAutoScrolledRecycleView;
+		private RecycleViewScroll mRecycleViewScroll;
 
 		MainMenuAdaptor(MillDetailValues Array) {
 			this.Array = Array;
@@ -130,7 +132,7 @@ public class MainMenuFragment extends Fragment {
 		@Override
 		public int getItemViewType(int position) {
 			super.getItemViewType(position);
-			if (position == mAutoScrolledRecycleView.getCurrentSelectedPosition()) {
+			if (position == mRecycleViewScroll.getCurrentSelectedPosition()) {
 				return mViewTypSelected;
 			} else return mViewTypeDefault;
 		}
@@ -140,7 +142,8 @@ public class MainMenuFragment extends Fragment {
 		public MainMenuHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
 			LayoutInflater inflater = LayoutInflater.from(getActivity());
-			mMillItemDefaultBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_default, parent, false);
+			mMillItemDefaultBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_default,
+					parent, false);
 			return new MainMenuHolder(mMillItemDefaultBinding);
 		}
 
@@ -157,38 +160,35 @@ public class MainMenuFragment extends Fragment {
 		@Override
 		public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
 			super.onAttachedToRecyclerView(recyclerView);
-			mAutoScrolledRecycleView = (AutoScrolledRecycleView) recyclerView;
+			mRecycleViewScroll = (RecycleViewScroll) recyclerView;
 		}
 	}
 
 	private void updateUi() {
 		MainMenuAdaptor mainMenuAdaptor = new MainMenuAdaptor(mMillDetailValues);
-		mAutoScrolledRecycleView.setAdapter(mainMenuAdaptor);
-		Objects.requireNonNull(mAutoScrolledRecycleView.getItemAnimator()).setChangeDuration(0);
-		mAutoScrolledRecycleView.setVerticalScrollBarEnabled(true);
-		mAutoScrolledRecycleView.setScrollbarFadingEnabled(false);
+		mRecycleViewScroll.setAdapter(mainMenuAdaptor);
+		RecyclerView.ItemAnimator animator = mRecycleViewScroll.getItemAnimator();
+		if (animator != null) animator.setChangeDuration(0);
+		mRecycleViewScroll.setVerticalScrollBarEnabled(true);
+		mRecycleViewScroll.setScrollbarFadingEnabled(true);
 	}
 
-	private void getViewSize(final View view) {
+	private void defineViewSize(final View view) {
 		ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
 		if (viewTreeObserver.isAlive()) {
 			viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 
 				@Override
 				public void onGlobalLayout() {
-
 					LinearLayout linearLayout = rootView.findViewById(R.id.framelay1);
 					view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
 					final int viewHeight = view.getHeight();
 					final int itemHeight = (int) (linearLayout.getMeasuredHeight() + getResources().getDimension(R.dimen.offcet));
 					final int itemQuantity = (int) Math.floor((double) viewHeight / (double) itemHeight) - 1;
-
-					mAutoScrolledRecycleView.initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
-
-					Log.d("mar2", "itemQuantity = " + itemQuantity);
+					mRecycleViewScroll.initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
+					/*Log.d("mar2", "itemQuantity = " + itemQuantity);
 					Log.d("mar2", "itemHeight = " + viewHeight);
-					Log.d("mar2", "viewHeight = " + itemHeight);
+					Log.d("mar2", "viewHeight = " + itemHeight);*/
 				}
 			});
 		}

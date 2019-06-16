@@ -1,25 +1,19 @@
 package com.android.malsoftware.techadvisor;
 
-public class RecycleRange {
-    private int mRegionNumber;
+class RecycleRange {
     private int mMinPosition;
     private int mMaxPosition;
 
-    RecycleRange (int regionNumber, int minPosition, int maxPosition) {
-        mRegionNumber = regionNumber;
+    RecycleRange (int minPosition, int maxPosition) {
         mMinPosition = minPosition;
         mMaxPosition = maxPosition;
     }
 
-    public int getRegionNumber() {
-        return mRegionNumber;
-    }
-
-    public int getMinPosition() {
+    int getMinPosition() {
         return mMinPosition;
     }
 
-    public int getMaxPosition() {
+    int getMaxPosition() {
         return mMaxPosition;
     }
 }

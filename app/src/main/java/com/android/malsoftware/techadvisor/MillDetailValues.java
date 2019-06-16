@@ -30,4 +30,8 @@ public class MillDetailValues {
     List<Pairs> getPairsArray() {
         return mPairsArray;
     }
+
+    public String getStringFieldValue(int position) {
+        return String.valueOf(mPairsArray.get(position).getValue());
+    }
 }

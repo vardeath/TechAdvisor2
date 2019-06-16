@@ -1,7 +1,5 @@
 package com.android.malsoftware.techadvisor;
 
-import android.util.Log;
-
 import androidx.databinding.BaseObservable;
 import androidx.databinding.Bindable;
 import androidx.databinding.ObservableField;
@@ -14,7 +12,7 @@ public class BaseItemViewModel extends BaseObservable {
 	private ObservableField<String> mDescription = new ObservableField<>();
 	private ObservableInt mBackground = new ObservableInt();
 	private int position;
-	private AutoScrolledRecycleView mAutoScrolledRecycleView;
+	private RecycleViewScroll mRecycleViewScroll;
 
 	public ObservableField<String> getDescription() {
 		return mDescription;
@@ -39,8 +37,7 @@ public class BaseItemViewModel extends BaseObservable {
 	}
 
 	public void onClick() {
-		Log.d("mar2","clicked " + position);
-		mAutoScrolledRecycleView.setSelectedPosition(position);
+		mRecycleViewScroll.setSelectedPosition(position, true);
 	}
 
 	@Bindable
@@ -48,8 +45,8 @@ public class BaseItemViewModel extends BaseObservable {
 		this.position = position;
 	}
 
-	void setAutoScrolledRecycleView(AutoScrolledRecycleView autoScrolledRecycleView) {
-		mAutoScrolledRecycleView = autoScrolledRecycleView;
+	void setRecycleViewScroll(RecycleViewScroll recycleViewScroll) {
+		mRecycleViewScroll = recycleViewScroll;
 	}
 
 	@Bindable
