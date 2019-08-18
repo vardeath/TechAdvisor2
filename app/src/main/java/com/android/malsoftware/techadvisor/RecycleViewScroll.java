@@ -1,16 +1,18 @@
 package com.android.malsoftware.techadvisor;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecycleViewScroll extends RecyclerView {
+	private final String TAG = "RecyclerVIewScroll";
 
 	/**
 	 * Класс позволяет осуществлять автоматическую прокрутку к выделенному элементу
@@ -22,63 +24,36 @@ public class RecycleViewScroll extends RecyclerView {
 	 * Если пользователь осуществлял скроллинг вручную, то прокрутка будет только к выделенному
 	 * элементу без учета диапазона.
 	 */
-	private int mItemCount; //Общее число элементов в RecyclerView.
-
-	private final Handler h = new Handler();
+	private int mRecViewItemsQuantity; //Число видимых элементов в RecyclerView.
 	/**
 	 * Диапазоны значений для видимых областей скроллинга, текущий выделенны элемент отображается
 	 * в пределах диапазона области.
 	 */
 	private List<RecycleRange> mRangesArray = new ArrayList<>();
-
 	private MainMenuFragment.MainMenuAdaptor mAdapter = null;
-
 	private int mOldSelectedPosition = 0;
 	private int mCurrentSelectedPosition = 0;
-	private boolean mHandScrolled = false;
-
 	private int mRangeMinPosition;
 	private int mRangeMaxPosition;
+	private LinearLayoutManager mLinearLayoutManager = null;
 
-	private int mBaseValueAxisY = 0;
+	private int mFirstVisiblePosition;
+	private int mLastVisiblePosition;
+	private int mFirstPartiallyVisiblePosition;
+	private int mLastPartiallyVisiblePosition;
 
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent iEv) {
-		if (isEnabled()) {
-			processEvent(iEv);
-			super.dispatchTouchEvent(iEv);
-			return true; //to keep receive event that follow down event
-		}
-
-		return super.dispatchTouchEvent(iEv);
-	}
-
-	private void processEvent(final MotionEvent iEv) {
-		switch (iEv.getAction()) {
-			case MotionEvent.ACTION_DOWN:
-				mBaseValueAxisY = (int) iEv.getRawY();
-				break;
-			case MotionEvent.ACTION_UP:
-				break;
-			case MotionEvent.ACTION_MOVE:
-				int newY = (int) iEv.getY();
-				int difY = mBaseValueAxisY - newY;
-				int MAX_VALUE = 10;
-				if (Math.abs(difY) > MAX_VALUE) mHandScrolled = true;
-				break;
-		}
-	}
-
-	public void initRanges(int itemQuantity, int itemCount) {
-		mItemCount = itemCount;
-		for (int i = 0; i < mItemCount; i += itemQuantity) {
+	public void initRanges(int visibleItemsQuantity, int itemTotalQuantity) {
+		mRecViewItemsQuantity = itemTotalQuantity;
+		for (int i = 0; i < mRecViewItemsQuantity; i += visibleItemsQuantity + 1) {
 			int maxPosition;
-			if (i + itemQuantity < mItemCount) maxPosition = i + itemQuantity - 1;
-			else maxPosition = itemCount;
+			if (i + visibleItemsQuantity < mRecViewItemsQuantity) maxPosition = i + visibleItemsQuantity;
+			else maxPosition = itemTotalQuantity - 1;
+			Log.d(TAG, "minpos = " + i + " | maxPosition = " + maxPosition);
 			RecycleRange element = new RecycleRange(i, maxPosition);
 			mRangesArray.add(element);
 		}
 		mAdapter = (MainMenuFragment.MainMenuAdaptor) getAdapter();
+		mLinearLayoutManager = (LinearLayoutManager) getLayoutManager();
 	}
 
 	public RecycleViewScroll(@NonNull Context context) {
@@ -121,62 +96,76 @@ public class RecycleViewScroll extends RecyclerView {
 		return mCurrentSelectedPosition;
 	}
 
+	private void refreshLayoutPositions() {
+		mFirstVisiblePosition = mLinearLayoutManager.findFirstCompletelyVisibleItemPosition();
+		mLastVisiblePosition = mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
+		mFirstPartiallyVisiblePosition = mLinearLayoutManager.findFirstVisibleItemPosition();
+		mLastPartiallyVisiblePosition = mLinearLayoutManager.findLastVisibleItemPosition();
+	}
+
 	public void incrementSelectedPosition() {
 
-		if (mCurrentSelectedPosition + 1 > mItemCount - 1) {
+		int lastSelectedPosition = mCurrentSelectedPosition;
+		refreshLayoutPositions();
+
+		if (mCurrentSelectedPosition + 1 > mRecViewItemsQuantity - 1) {
 			setSelectedPosition(0, false);
 		} else {
 			setSelectedPosition(mCurrentSelectedPosition + 1, false);
 		}
-		doRunnableAction(scrollDown);
-		applySelectedPosition();
+
+		if (mCurrentSelectedPosition == 0) {
+			if (mFirstVisiblePosition == 0) applySelectedPosition();
+			smoothScrollToPosition(0);
+			return;
+		}
+
+		if (mRangeMinPosition < mFirstVisiblePosition) {
+			if (mCurrentSelectedPosition == mFirstPartiallyVisiblePosition) applySelectedPosition();
+			smoothScrollToPosition(mRangeMinPosition);
+			return;
+		}
+
+		if (mFirstVisiblePosition == mRangeMinPosition && mLastVisiblePosition == mRangeMaxPosition
+		|| mLastVisiblePosition == mAdapter.getItemCount() - 1) {
+			applySelectedPosition();
+		} else {
+			if (mLastPartiallyVisiblePosition != mLastVisiblePosition
+					|| lastSelectedPosition == mFirstVisiblePosition) applySelectedPosition();
+            smoothScrollToPosition(mRangeMaxPosition);
+        }
 	}
 
 	public void decrementSelectedPosition() {
 
+		int lastSelectedPosition = mCurrentSelectedPosition;
+		refreshLayoutPositions();
+
 		if (mCurrentSelectedPosition - 1 < 0) {
-			setSelectedPosition(mItemCount - 1, false);
+			setSelectedPosition(mRecViewItemsQuantity - 1, false);
 		} else {
 			setSelectedPosition(mCurrentSelectedPosition - 1, false);
 		}
-		doRunnableAction(scrollUp);
-		applySelectedPosition();
-	}
 
-	private void doRunnableAction(Runnable actionScroll) {
-		final Thread actionAutoScroll = new Thread(() -> {
-			h.postDelayed(actionScroll, 20);
+		if (mCurrentSelectedPosition == mRecViewItemsQuantity - 1) {
+			if (mLastVisiblePosition == mCurrentSelectedPosition) applySelectedPosition();
+			smoothScrollToPosition(mRecViewItemsQuantity - 1);
+			return;
 		}
-		);
-		actionAutoScroll.start();
-	}
 
-	private Runnable scrollDown = () -> {
-		{
-			if (mCurrentSelectedPosition == 0) {
-				smoothScrollToPosition(mRangeMinPosition);
-			} else if (verifyHandScroll())
-				smoothScrollToPosition(mRangeMaxPosition);
-
+		if (mLastVisiblePosition < mRangeMaxPosition) {
+			if (mCurrentSelectedPosition == mLastPartiallyVisiblePosition) applySelectedPosition();
+			smoothScrollToPosition(mRangeMaxPosition);
+			return;
 		}
-	};
 
-	private Runnable scrollUp = () -> {
-		{
-			if (mCurrentSelectedPosition == mItemCount - 1) {
-				smoothScrollToPosition(mRangeMaxPosition);
-			} else if (verifyHandScroll())
-				smoothScrollToPosition(mRangeMinPosition);
-
+		if (mFirstVisiblePosition == mRangeMinPosition && mLastVisiblePosition == mRangeMaxPosition
+				|| mLastVisiblePosition == 0) {
+			applySelectedPosition();
+		} else {
+			if (mFirstPartiallyVisiblePosition != mFirstVisiblePosition
+					|| lastSelectedPosition == mLastVisiblePosition) applySelectedPosition();
+			smoothScrollToPosition(mRangeMinPosition);
 		}
-	};
-
-	private boolean verifyHandScroll() {
-		if (mHandScrolled) {
-			smoothScrollToPosition(mCurrentSelectedPosition);
-			mHandScrolled = false;
-			return false;
-		}
-		return true;
 	}
 }
