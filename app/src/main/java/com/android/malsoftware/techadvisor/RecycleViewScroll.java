@@ -30,7 +30,7 @@ public class RecycleViewScroll extends RecyclerView {
 	 * в пределах диапазона области.
 	 */
 	private List<RecycleRange> mRangesArray = new ArrayList<>();
-	private MainMenuFragment.MainMenuAdaptor mAdapter = null;
+	private AdapterSelector mAdapter = null;
 	private int mOldSelectedPosition = 0;
 	private int mCurrentSelectedPosition = 0;
 	private int mRangeMinPosition;
@@ -52,7 +52,7 @@ public class RecycleViewScroll extends RecyclerView {
 			RecycleRange element = new RecycleRange(i, maxPosition);
 			mRangesArray.add(element);
 		}
-		mAdapter = (MainMenuFragment.MainMenuAdaptor) getAdapter();
+		mAdapter = (AdapterSelector) getAdapter();
 		mLinearLayoutManager = (LinearLayoutManager) getLayoutManager();
 	}
 
