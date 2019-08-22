@@ -11,10 +11,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.selection.SelectionPredicates;
-import androidx.recyclerview.selection.SelectionTracker;
-import androidx.recyclerview.selection.StableIdKeyProvider;
-import androidx.recyclerview.selection.StorageStrategy;
+import androidx.recyclerview.selection.*;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,7 +23,7 @@ public class MainMenuFragment extends Fragment {
 	private DescriptionsPresets mDescriptionsPresets = null;
 	private RecycleViewScroll mRecycleViewScroll = null;
 
-	private SelectionTracker<Long> tracker = null;
+	private SelectionTracker tracker = null;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -50,7 +47,7 @@ public class MainMenuFragment extends Fragment {
 		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity());
 		mRecycleViewScroll.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
-		Button btn2 = rootView.findViewById(R.id.button);
+		Button btn2 = rootView.findViewById(R.id.button_down);
 		defineViewSize(mRecycleViewScroll);
 		updateUi();
 
@@ -75,16 +72,17 @@ public class MainMenuFragment extends Fragment {
                 new MyItemDetailsLookup(mRecycleViewScroll),
 				StorageStrategy.createLongStorage()
         		).withSelectionPredicate(
-				SelectionPredicates.createSelectAnything()
-		).build();
+				new MySelectionPredicate()).build();
 
 		adapterSelector.tracker = tracker;
+		tracker.select((long) 0);
 	}
 
 	private void defineViewSize(final View view) {
 		ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
 		if (viewTreeObserver.isAlive()) {
-			viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+			viewTreeObserver.addOnGlobalLayoutListener(
+					new ViewTreeObserver.OnGlobalLayoutListener() {
 
 				@Override
 				public void onGlobalLayout() {
@@ -95,7 +93,8 @@ public class MainMenuFragment extends Fragment {
 							getResources().getDimension(R.dimen.offcet));
 					final int itemQuantity = (int) Math.floor((double) viewHeight
 							/ (double) itemHeight) - 1;
-					mRecycleViewScroll.initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
+					mRecycleViewScroll.
+							initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
 				}
 			});
 		}

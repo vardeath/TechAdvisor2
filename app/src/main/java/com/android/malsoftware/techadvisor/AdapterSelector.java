@@ -1,47 +1,78 @@
 package com.android.malsoftware.techadvisor;
 
+import android.annotation.SuppressLint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
+import androidx.databinding.ObservableArrayList;
 import androidx.recyclerview.selection.*;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 
-public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.SelectorHolder> {
+import java.lang.reflect.Array;
+import java.util.Collections;
 
-    public SelectionTracker<Long> tracker;
+public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.SelectorHolder>
+        implements View.OnClickListener {
+
+    private final String TAG = "AdapterSelector";
+    SelectionTracker<Long> tracker;
     private DescriptionsPresets mDescriptionsPresets;
     private RecycleViewScroll mRecycleViewScroll = null;
-    private int mSelectedPosition = 0;
     private MillDetailValues Array;
-    private MillItemDefaultBinding mMillItemDefaultBinding;
+    private ItemDetailsLookup.ItemDetails mSelected = null;
+    private int mLastPos = 0;
 
-    public AdapterSelector(DescriptionsPresets descriptionsPresets, MillDetailValues array){
+
+    ItemDetailsLookup.ItemDetails getSelected() {
+        return mSelected;
+    }
+
+    AdapterSelector(DescriptionsPresets descriptionsPresets, MillDetailValues array){
         mDescriptionsPresets = descriptionsPresets;
         this.Array = array;
+        setHasStableIds(true);
     }
 
     @NonNull
     @Override
     public SelectorHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        mMillItemDefaultBinding = DataBindingUtil.inflate(inflater, R.layout.mill_item_default,
-                parent, false);
-        return new SelectorHolder(mMillItemDefaultBinding);
+        MillItemDefaultBinding millItemDefaultBinding = DataBindingUtil.
+                        inflate(inflater, R.layout.mill_item_default, parent, false);
+        millItemDefaultBinding.getRoot().setOnClickListener(this);
+        return new SelectorHolder(millItemDefaultBinding);
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     public void onBindViewHolder(@NonNull SelectorHolder holder, int position) {
-        holder.bind(position, Array);
+        Long x = (long) position;
+        if (tracker != null) holder.bind(position, Array, tracker.isSelected(x));
     }
 
     @Override
     public int getItemCount() {
         return Array.getPairsArray().size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return (long) position;
+    }
+
+    @Override
+    public void onClick(View view) {
+        int pos = mLastPos;
+        pos = mRecycleViewScroll.getChildAdapterPosition(view);
+        tracker.select((long) pos);
+        mLastPos = pos;
+        Log.d(TAG, "Clicked");
     }
 
     class SelectorHolder extends RecyclerView.ViewHolder{
@@ -59,40 +90,32 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
             super(itemView);
         }
 
-        void bind(int position, MillDetailValues val) {
+        void bind(int position, MillDetailValues val, boolean activated) {
             if (mMillItemDefaultBinding != null) {
+
                 mBaseItemViewModel.setText(val.getStringFieldValue(position));
-                if (mSelectedPosition == position) itemView.setActivated(true);
-                mBaseItemViewModel.setPosition(position);
+                itemView.setActivated(activated);
                 mBaseItemViewModel.setDescription(mDescriptionsPresets.
                                 getStringDescription(val.
                                         getPairsArray().
                                         get(position).
                                         getFieldType()));
-                if (mRecycleViewScroll != null) mBaseItemViewModel.setRecycleViewScroll(mRecycleViewScroll);
             }
         }
 
         ItemDetailsLookup.ItemDetails getItemDetails() {
-            ItemDetailsLookup.ItemDetails object = new ItemDetailsLookup.ItemDetails() {
+            mSelected = new ItemDetailsLookup.ItemDetails() {
                 @Override
                 public int getPosition() {
                     return getAdapterPosition();
                 }
 
-                @Nullable
                 @Override
                 public Object getSelectionKey() {
                     return getItemId();
                 }
             };
-            return object;
+            return mSelected;
         }
-    }
-
-    @Override
-    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
-        super.onAttachedToRecyclerView(recyclerView);
-        mRecycleViewScroll = (RecycleViewScroll) recyclerView;
     }
 }

@@ -11,27 +11,40 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:scrollbars="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/button_up"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/button_up"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/up"
-        app:layout_constraintBottom_toTopOf="@+id/button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    </com.android.malsoftware.techadvisor.RecycleViewScroll>
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/down"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/button_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/up" />
+
+        <Button
+            android:id="@+id/button_down"
+            android:layout_height="wrap_content"
+            android:text="@string/down"
+            android:layout_width="wrap_content" />
+
+        <Button
+            android:id="@+id/button_refrsh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

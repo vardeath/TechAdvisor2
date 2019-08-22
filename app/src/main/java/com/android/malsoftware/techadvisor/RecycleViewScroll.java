@@ -88,8 +88,8 @@ public class RecycleViewScroll extends RecyclerView {
 	}
 
 	private void applySelectedPosition() {
-		mAdapter.notifyItemChanged(mCurrentSelectedPosition);
-		mAdapter.notifyItemChanged(mOldSelectedPosition);
+		/*mAdapter.notifyItemChanged(mCurrentSelectedPosition);
+		mAdapter.notifyItemChanged(mOldSelectedPosition);*/
 	}
 
 	public int getCurrentSelectedPosition() {
@@ -115,23 +115,23 @@ public class RecycleViewScroll extends RecyclerView {
 		}
 
 		if (mCurrentSelectedPosition == 0) {
-			if (mFirstVisiblePosition == 0) applySelectedPosition();
+			if (mFirstVisiblePosition == 0) //applySelectedPosition();
 			smoothScrollToPosition(0);
 			return;
 		}
 
 		if (mRangeMinPosition < mFirstVisiblePosition) {
-			if (mCurrentSelectedPosition == mFirstPartiallyVisiblePosition) applySelectedPosition();
+			if (mCurrentSelectedPosition == mFirstPartiallyVisiblePosition) //applySelectedPosition();
 			smoothScrollToPosition(mRangeMinPosition);
 			return;
 		}
 
 		if (mFirstVisiblePosition == mRangeMinPosition && mLastVisiblePosition == mRangeMaxPosition
 		|| mLastVisiblePosition == mAdapter.getItemCount() - 1) {
-			applySelectedPosition();
+			//applySelectedPosition();
 		} else {
 			if (mLastPartiallyVisiblePosition != mLastVisiblePosition
-					|| lastSelectedPosition == mFirstVisiblePosition) applySelectedPosition();
+					|| lastSelectedPosition == mFirstVisiblePosition) //applySelectedPosition();
             smoothScrollToPosition(mRangeMaxPosition);
         }
 	}
@@ -148,23 +148,23 @@ public class RecycleViewScroll extends RecyclerView {
 		}
 
 		if (mCurrentSelectedPosition == mRecViewItemsQuantity - 1) {
-			if (mLastVisiblePosition == mCurrentSelectedPosition) applySelectedPosition();
+			if (mLastVisiblePosition == mCurrentSelectedPosition) //applySelectedPosition();
 			smoothScrollToPosition(mRecViewItemsQuantity - 1);
 			return;
 		}
 
 		if (mLastVisiblePosition < mRangeMaxPosition) {
-			if (mCurrentSelectedPosition == mLastPartiallyVisiblePosition) applySelectedPosition();
+			if (mCurrentSelectedPosition == mLastPartiallyVisiblePosition) //applySelectedPosition();
 			smoothScrollToPosition(mRangeMaxPosition);
 			return;
 		}
 
 		if (mFirstVisiblePosition == mRangeMinPosition && mLastVisiblePosition == mRangeMaxPosition
 				|| mLastVisiblePosition == 0) {
-			applySelectedPosition();
+			//applySelectedPosition();
 		} else {
 			if (mFirstPartiallyVisiblePosition != mFirstVisiblePosition
-					|| lastSelectedPosition == mLastVisiblePosition) applySelectedPosition();
+					|| lastSelectedPosition == mLastVisiblePosition) //applySelectedPosition();
 			smoothScrollToPosition(mRangeMinPosition);
 		}
 	}
