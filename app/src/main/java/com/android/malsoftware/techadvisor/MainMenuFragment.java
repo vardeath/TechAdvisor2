@@ -15,15 +15,26 @@ import androidx.recyclerview.selection.*;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.malsoftware.techadvisor.RecycleViewSelect.AdapterSelector;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.MyItemDetailsLookup;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.MySelectionPredicate;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.RecycleViewScroll;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.StringItemKeyProvider;
+
+import java.util.List;
+
 public class MainMenuFragment extends Fragment {
 
+	private final String TAG = "MainMenuFragment";
 	private Context mContext = null;
 	private View rootView = null;
 	private MillDetailValues mMillDetailValues = null;
 	private DescriptionsPresets mDescriptionsPresets = null;
 	private RecycleViewScroll mRecycleViewScroll = null;
+	private List<String> mStringKeys = null;
+	private Object mSelectedKey = null;
 
-	private SelectionTracker tracker = null;
+	private SelectionTracker mSelectionTracker = null;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -35,6 +46,7 @@ public class MainMenuFragment extends Fragment {
 		mContext = getContext();
 		mMillDetailValues = MillDetailValues.newInstance(mContext);
 		mDescriptionsPresets = DescriptionsPresets.newInstance(mContext);
+		mStringKeys = mMillDetailValues.getStringKeys();
 	}
 
 	@Nullable
@@ -48,7 +60,6 @@ public class MainMenuFragment extends Fragment {
 		mRecycleViewScroll.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
 		Button btn2 = rootView.findViewById(R.id.button_down);
-		defineViewSize(mRecycleViewScroll);
 		updateUi();
 
 		btn.setOnClickListener(v -> mRecycleViewScroll.decrementSelectedPosition());
@@ -59,44 +70,57 @@ public class MainMenuFragment extends Fragment {
 
 	private void updateUi() {
 		AdapterSelector adapterSelector = new AdapterSelector(mDescriptionsPresets, mMillDetailValues);
+		adapterSelector.setStringKeys(mStringKeys);
 		mRecycleViewScroll.setAdapter(adapterSelector);
 		RecyclerView.ItemAnimator animator = mRecycleViewScroll.getItemAnimator();
 		if (animator != null) animator.setChangeDuration(0);
 		mRecycleViewScroll.setVerticalScrollBarEnabled(true);
 		mRecycleViewScroll.setScrollbarFadingEnabled(true);
+		mRecycleViewScroll.initStringKeys(mStringKeys);
 
-		tracker = new SelectionTracker.Builder<Long>(
+		mSelectionTracker = new SelectionTracker.Builder<String>(
 				"mySelection",
 				mRecycleViewScroll,
-				new StableIdKeyProvider(mRecycleViewScroll),
+				new StringItemKeyProvider(1, mStringKeys),
                 new MyItemDetailsLookup(mRecycleViewScroll),
-				StorageStrategy.createLongStorage()
+				StorageStrategy.createStringStorage()
         		).withSelectionPredicate(
 				new MySelectionPredicate()).build();
 
-		adapterSelector.tracker = tracker;
-		tracker.select((long) 0);
+		adapterSelector.tracker = mSelectionTracker;
+		mRecycleViewScroll.tracker = mSelectionTracker;
+
+		mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver() {
+			@Override
+			public void onItemStateChanged(@NonNull Object key, boolean selected) {
+				super.onItemStateChanged(key, selected);
+				if (selected)  {
+					mSelectedKey = key;
+					mRecycleViewScroll.setSelectedPosition(findPositionByKey(mSelectedKey));
+				}
+			}
+
+			@Override
+			public void onSelectionRefresh() {
+				super.onSelectionRefresh();
+			}
+
+			@Override
+			public void onSelectionChanged() {
+				super.onSelectionChanged();
+				if (!mSelectionTracker.hasSelection()) mSelectionTracker.select(mSelectedKey);
+			}
+		});
+
+
+		mSelectionTracker.select(mStringKeys.get(0));
 	}
 
-	private void defineViewSize(final View view) {
-		ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
-		if (viewTreeObserver.isAlive()) {
-			viewTreeObserver.addOnGlobalLayoutListener(
-					new ViewTreeObserver.OnGlobalLayoutListener() {
-
-				@Override
-				public void onGlobalLayout() {
-					LinearLayout linearLayout = rootView.findViewById(R.id.framelay1);
-					view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-					final int viewHeight = view.getHeight();
-					final int itemHeight = (int) (linearLayout.getMeasuredHeight() +
-							getResources().getDimension(R.dimen.offcet));
-					final int itemQuantity = (int) Math.floor((double) viewHeight
-							/ (double) itemHeight) - 1;
-					mRecycleViewScroll.
-							initRanges(itemQuantity, mMillDetailValues.getPairsArray().size());
-				}
-			});
+	private int findPositionByKey(Object key) {
+		String onj = (String) key;
+		for (int i = 0; i < mStringKeys.size(); ++i) {
+			if (onj == mStringKeys.get(i)) return i;
 		}
+		return Integer.parseInt(null);
 	}
 }

@@ -21,7 +21,7 @@ public class BaseItemViewModel extends BaseObservable {
 	}
 
 	@Bindable
-	void setText(String text) {
+    public void setText(String text) {
 		mText.set(text);
 	}
 
@@ -31,7 +31,7 @@ public class BaseItemViewModel extends BaseObservable {
 	}*/
 
 	@Bindable
-    void setDescription(String value) {
+	public void setDescription(String value) {
 		mDescription.set(value);
 	}
 }

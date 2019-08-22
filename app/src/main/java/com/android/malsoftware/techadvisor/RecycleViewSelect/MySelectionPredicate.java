@@ -1,4 +1,4 @@
-package com.android.malsoftware.techadvisor;
+package com.android.malsoftware.techadvisor.RecycleViewSelect;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.selection.SelectionTracker;
@@ -9,8 +9,8 @@ public class MySelectionPredicate extends SelectionTracker.SelectionPredicate {
 
     @Override
     public boolean canSetStateForKey(@NonNull Object key, boolean nextState) {
-        if (mLastKey == key) return false;
-        mLastKey = key;
+        /*if (mLastKey == key) return false;
+        mLastKey = key;*/
         return true;
     }
 

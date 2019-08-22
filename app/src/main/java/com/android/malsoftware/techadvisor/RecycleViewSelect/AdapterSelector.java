@@ -1,42 +1,38 @@
-package com.android.malsoftware.techadvisor;
+package com.android.malsoftware.techadvisor.RecycleViewSelect;
 
 import android.annotation.SuppressLint;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
-import androidx.databinding.ObservableArrayList;
 import androidx.recyclerview.selection.*;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.malsoftware.techadvisor.BaseItemViewModel;
+import com.android.malsoftware.techadvisor.DescriptionsPresets;
+import com.android.malsoftware.techadvisor.MillDetailValues;
+import com.android.malsoftware.techadvisor.R;
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 
-import java.lang.reflect.Array;
-import java.util.Collections;
+import java.util.List;
 
-public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.SelectorHolder>
-        implements View.OnClickListener {
+public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.SelectorHolder> {
 
     private final String TAG = "AdapterSelector";
-    SelectionTracker<Long> tracker;
+    public SelectionTracker tracker;
     private DescriptionsPresets mDescriptionsPresets;
-    private RecycleViewScroll mRecycleViewScroll = null;
     private MillDetailValues Array;
-    private ItemDetailsLookup.ItemDetails mSelected = null;
-    private int mLastPos = 0;
+    private List<String> mStrings;
 
-
-    ItemDetailsLookup.ItemDetails getSelected() {
-        return mSelected;
-    }
-
-    AdapterSelector(DescriptionsPresets descriptionsPresets, MillDetailValues array){
+    public AdapterSelector(DescriptionsPresets descriptionsPresets, MillDetailValues array){
         mDescriptionsPresets = descriptionsPresets;
         this.Array = array;
-        setHasStableIds(true);
+    }
+
+    public void setStringKeys(List<String> Keys) {
+        mStrings = Keys;
     }
 
     @NonNull
@@ -45,34 +41,24 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         MillItemDefaultBinding millItemDefaultBinding = DataBindingUtil.
                         inflate(inflater, R.layout.mill_item_default, parent, false);
-        millItemDefaultBinding.getRoot().setOnClickListener(this);
         return new SelectorHolder(millItemDefaultBinding);
     }
 
     @SuppressLint("RestrictedApi")
     @Override
     public void onBindViewHolder(@NonNull SelectorHolder holder, int position) {
-        Long x = (long) position;
-        if (tracker != null) holder.bind(position, Array, tracker.isSelected(x));
+        String item = mStrings.get(position);
+        if (tracker != null) holder.bind(position, Array, tracker.isSelected(item));
     }
 
     @Override
     public int getItemCount() {
-        return Array.getPairsArray().size();
+        return mStrings == null ? 0 : mStrings.size();
     }
 
     @Override
     public long getItemId(int position) {
-        return (long) position;
-    }
-
-    @Override
-    public void onClick(View view) {
-        int pos = mLastPos;
-        pos = mRecycleViewScroll.getChildAdapterPosition(view);
-        tracker.select((long) pos);
-        mLastPos = pos;
-        Log.d(TAG, "Clicked");
+        return mStrings.get(position).hashCode();
     }
 
     class SelectorHolder extends RecyclerView.ViewHolder{
@@ -96,26 +82,12 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
                 mBaseItemViewModel.setText(val.getStringFieldValue(position));
                 itemView.setActivated(activated);
                 mBaseItemViewModel.setDescription(mDescriptionsPresets.
-                                getStringDescription(val.
-                                        getPairsArray().
-                                        get(position).
-                                        getFieldType()));
+                        getStringDescription(val.getFieldType(position)));
             }
         }
 
         ItemDetailsLookup.ItemDetails getItemDetails() {
-            mSelected = new ItemDetailsLookup.ItemDetails() {
-                @Override
-                public int getPosition() {
-                    return getAdapterPosition();
-                }
-
-                @Override
-                public Object getSelectionKey() {
-                    return getItemId();
-                }
-            };
-            return mSelected;
+            return new StringItemDetails(getAdapterPosition(), mStrings.get(getAdapterPosition()));
         }
     }
 }

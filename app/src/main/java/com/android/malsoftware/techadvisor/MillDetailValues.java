@@ -8,7 +8,7 @@ import java.util.List;
 
 public class MillDetailValues {
     private Context mContext;
-
+    private List<String> mFieldNames = new ArrayList<String>();
     private List<Pairs> mPairsArray = new ArrayList<>();
 
     private MillDetailValues(Context context) {
@@ -16,6 +16,7 @@ public class MillDetailValues {
         FieldType[] val = FieldType.values();
         for (int i = 0; i < FieldType.values().length; ++i) {
             mPairsArray.add(new Pairs(val[i], 0));
+            mFieldNames.add(String.valueOf(val[i]));
         }
     }
 
@@ -27,11 +28,19 @@ public class MillDetailValues {
         return mMillDetailValues;
     }
 
-    List<Pairs> getPairsArray() {
+    public List<Pairs> getPairsArray() {
         return mPairsArray;
     }
 
     public String getStringFieldValue(int position) {
         return String.valueOf(mPairsArray.get(position).getValue());
+    }
+
+    public List<String> getStringKeys() {
+        return mFieldNames;
+    }
+
+    public FieldType getFieldType(int pos){
+        return mPairsArray.get(pos).getFieldType();
     }
 }

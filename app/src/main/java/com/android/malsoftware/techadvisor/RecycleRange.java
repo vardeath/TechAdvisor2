@@ -1,19 +1,19 @@
 package com.android.malsoftware.techadvisor;
 
-class RecycleRange {
+public class RecycleRange {
     private int mMinPosition;
     private int mMaxPosition;
 
-    RecycleRange (int minPosition, int maxPosition) {
+    public RecycleRange(int minPosition, int maxPosition) {
         mMinPosition = minPosition;
         mMaxPosition = maxPosition;
     }
 
-    int getMinPosition() {
+    public int getMinPosition() {
         return mMinPosition;
     }
 
-    int getMaxPosition() {
+    public int getMaxPosition() {
         return mMaxPosition;
     }
 }

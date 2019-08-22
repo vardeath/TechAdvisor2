@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 import static com.android.malsoftware.techadvisor.FieldType.*;
 
-class DescriptionsPresets {
+public class DescriptionsPresets {
     private Context mContext;
     @SuppressLint("StaticFieldLeak")
     private static DescriptionsPresets sDescriptionsPresets;
@@ -49,7 +49,7 @@ class DescriptionsPresets {
         mGeneralPreset.put((fieldType), getStringValue(id));
     }
 
-    String getStringDescription(FieldType fieldType) {
+    public String getStringDescription(FieldType fieldType) {
         return mGeneralPreset.get(fieldType);
     }
 }
