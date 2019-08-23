@@ -7,7 +7,7 @@ import androidx.recyclerview.selection.ItemDetailsLookup;
  * An {@link ItemDetailsLookup.ItemDetails} that holds details about a {@link String} item like its position and its value.
  */
 
-public class StringItemDetails extends ItemDetailsLookup.ItemDetails {
+public class StringItemDetails extends ItemDetailsLookup.ItemDetails<String> {
 
     private int position;
     private String item;
@@ -24,7 +24,7 @@ public class StringItemDetails extends ItemDetailsLookup.ItemDetails {
 
 
     @Override
-    public Object getSelectionKey() {
+    public String getSelectionKey() {
         return item;
     }
 }

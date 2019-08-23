@@ -2,147 +2,165 @@ package com.android.malsoftware.techadvisor.RecycleViewSelect;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.List;
 
 public class RecycleViewScroll extends RecyclerView {
-	private final String TAG = "RecyclerVIewScroll";
 
-	/**
-	 * Класс позволяет осуществлять автоматическую прокрутку к выделенному элементу
-	 * RecyclerView.
-	 * В классе существуют диапазоны прокрутки (зависят от экрана устройства
-	 * и определяются автоматически), которые позволяют осуществлять скроллинг не по одному
-	 * элементу, а сразу на количество элеентов, которое может содержать экран устройства, при
-	 * этом выделенный элемент всегда будет отображенным на экране.
-	 * Если пользователь осуществлял скроллинг вручную, то прокрутка будет только к выделенному
-	 * элементу без учета диапазона.
-	 */
+    private final String TAG = "RecyclerVIewScroll";
+    private SelectionTracker<String> mTracker;
+    private int mCurrentSelectedPosition = 0;
+    private LinearLayoutManager mLinearLayoutManager = null;
+    private List<String> mStringKeys = null;
+    private int mFirstVisiblePosition;
+    private int mLastVisiblePosition;
+    private int mFirstPartiallyVisiblePosition;
+    private int mLastPartiallyVisiblePosition;
+    private final int direction_UP = 0;
+    private final int direction_DOWN = 1;
+    private final int mScrollMinPosition = 0;
+    private int mScrollMaxPosition = 0;
 
-	public SelectionTracker tracker;
-	private int mCurrentSelectedPosition = 0;
-	private LinearLayoutManager mLinearLayoutManager = null;
-	private List<String> mStringKeys = null;
+    public void initStringKeys(List<String> keys) {
+        mStringKeys = keys;
+        mScrollMaxPosition = mStringKeys.size() - 1;
+    }
 
-	private int mFirstVisiblePosition;
-	private int mLastVisiblePosition;
-	private int mFirstPartiallyVisiblePosition;
-	private int mLastPartiallyVisiblePosition;
+    public void init() {
+        mLinearLayoutManager = (LinearLayoutManager) getLayoutManager();
+    }
 
-	public void initStringKeys(List<String> keys) {
-		mStringKeys = keys;
-	}
+    public RecycleViewScroll(@NonNull Context context) {
+        super(context);
+    }
 
-	public void init() {
-		mLinearLayoutManager = (LinearLayoutManager) getLayoutManager();
-	}
+    public RecycleViewScroll(@NonNull Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+    }
 
-	public RecycleViewScroll(@NonNull Context context) {
-		super(context);
-	}
+    public RecycleViewScroll(@NonNull Context context, @Nullable AttributeSet attrs,
+                             int defStyle) {
+        super(context, attrs, defStyle);
+    }
 
-	public RecycleViewScroll(@NonNull Context context, @Nullable AttributeSet attrs) {
-		super(context, attrs);
-	}
+    public void setTracker(SelectionTracker<String> tracker) {
+        mTracker = tracker;
+        if (getAdapter() != null) ((AdapterSelector) getAdapter()).setTracker(mTracker);
+    }
 
-	public RecycleViewScroll(@NonNull Context context, @Nullable AttributeSet attrs,
-							 int defStyle) {
-		super(context, attrs, defStyle);
-	}
+    public void setSelectedPosition(int position) {
+        mCurrentSelectedPosition = position;
+        //Log.d(TAG, "selected pos = " + position);
+    }
 
-	public void setSelectedPosition(int position) {
-		mCurrentSelectedPosition = position;
-		Log.d(TAG, "selected pos = " + position);
-		//defineRanges();
-	}
+    public int getCurrentSelectedPosition() {
+        return mCurrentSelectedPosition;
+    }
 
-	public int getCurrentSelectedPosition() {
-		return mCurrentSelectedPosition;
-	}
+    private void refreshLayoutPositions() {
+        mFirstVisiblePosition = mLinearLayoutManager.findFirstCompletelyVisibleItemPosition();
+        mLastVisiblePosition = mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
+        mFirstPartiallyVisiblePosition = mLinearLayoutManager.findFirstVisibleItemPosition();
+        mLastPartiallyVisiblePosition = mLinearLayoutManager.findLastVisibleItemPosition();
+    }
 
-	private void refreshLayoutPositions() {
-		mFirstVisiblePosition = mLinearLayoutManager.findFirstCompletelyVisibleItemPosition();
-		mLastVisiblePosition = mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
-		mFirstPartiallyVisiblePosition = mLinearLayoutManager.findFirstVisibleItemPosition();
-		mLastPartiallyVisiblePosition = mLinearLayoutManager.findLastVisibleItemPosition();
-	}
+    public void incrementSelectedPosition() {
+        refreshLayoutPositions();
+        if (mCurrentSelectedPosition + 1 < mStringKeys.size()) ++mCurrentSelectedPosition;
+        else mCurrentSelectedPosition = mScrollMinPosition;
 
-	public void incrementSelectedPosition() {
-		refreshLayoutPositions();
-		if (mCurrentSelectedPosition + 1 < mStringKeys.size()) ++mCurrentSelectedPosition;
-		else mCurrentSelectedPosition = 0;
+        if (isViewVisible()) return;
 
-		/**
-		 * Определение необходимости делать прокрутку списка к выделенной позиции.
-		 * Если выделенная позиция находится в видимой области, прокрутка не выполняется.
-		 */
-		if (isPositionCompletelyVisible()) {
-			tracker.select(mStringKeys.get(mCurrentSelectedPosition));
-			return;
-		}
+        int direction = getPositionDirection();
 
-		if (mCurrentSelectedPosition == mFirstPartiallyVisiblePosition) {
-			smoothScrollToPosition(mCurrentSelectedPosition);
-			return;
-		}
+        switch (direction) {
+            case direction_UP:
+                smoothScrollToPosition(mCurrentSelectedPosition);
+                break;
+            case direction_DOWN:
+                if (mCurrentSelectedPosition == mScrollMaxPosition) {
+                    smoothScrollToPosition(mCurrentSelectedPosition);
+                } else {
+                    int pointerPosition = mCurrentSelectedPosition + (
+                            mLastVisiblePosition - mFirstVisiblePosition);
+                    if (pointerPosition > mScrollMaxPosition) pointerPosition = mScrollMaxPosition;
+                    smoothScrollToPosition(pointerPosition);
+                }
+                break;
+        }
+    }
 
-		if (mFirstPartiallyVisiblePosition > mCurrentSelectedPosition
-				&& mLastPartiallyVisiblePosition > mCurrentSelectedPosition) {
-			int pointerPosition = mCurrentSelectedPosition - getScrollableCount() / 2;
-			if (pointerPosition < 0) pointerPosition = 0;
-			smoothScrollToPosition(pointerPosition);
-			return;
-		}
+    public void decrementSelectedPosition() {
+        refreshLayoutPositions();
+        if (mCurrentSelectedPosition - 1 >= 0) --mCurrentSelectedPosition;
+        else mCurrentSelectedPosition = mStringKeys.size() - 1;
 
-		if (mCurrentSelectedPosition == 0 && mCurrentSelectedPosition != mFirstVisiblePosition) {
-			smoothScrollToPosition(mCurrentSelectedPosition);
-			return;
-		}
+        if (isViewVisible()) return;
 
-		if (mCurrentSelectedPosition == mLastVisiblePosition) {
-			int pointerPosition = mStringKeys.size() - 1;
-			if (mCurrentSelectedPosition + getScrollableCount() < mStringKeys.size() - 1) {
-				pointerPosition = mCurrentSelectedPosition + getScrollableCount();
-			}
-			smoothScrollToPosition(pointerPosition);
-		}
-	}
+        int direction = getPositionDirection();
 
-	public void decrementSelectedPosition() {
-		refreshLayoutPositions();
-		if (mCurrentSelectedPosition - 1 >= 0) --mCurrentSelectedPosition;
-		else mCurrentSelectedPosition = mStringKeys.size() - 1;
+        switch (direction) {
+            case direction_UP:
+                if (mCurrentSelectedPosition == mScrollMinPosition) {
+                    smoothScrollToPosition(mCurrentSelectedPosition);
+                } else {
+                    int pointerPosition = mCurrentSelectedPosition -
+                            (mLastVisiblePosition - mFirstVisiblePosition);
+                    if (pointerPosition < mScrollMinPosition) pointerPosition = mScrollMinPosition;
+                    smoothScrollToPosition(pointerPosition);
+                }
+                break;
+            case direction_DOWN:
+                smoothScrollToPosition(mCurrentSelectedPosition);
+        }
+    }
 
-		tracker.select(mStringKeys.get(mCurrentSelectedPosition));
+    private int getScrollableCount() {
+        return mLastVisiblePosition - mFirstVisiblePosition;
+    }
 
-		smoothScrollToPosition(mCurrentSelectedPosition);
-	}
+    private boolean isViewVisible() {
+        if (isPositionCompletelyVisible()) {
+            mTracker.select(mStringKeys.get(mCurrentSelectedPosition));
+            return true;
+        }
 
-	private int getScrollableCount() {
-		return mLastVisiblePosition - mFirstVisiblePosition;
-	}
+        if (isPositionPartiallyVisible()) {
+            smoothScrollToPosition(mCurrentSelectedPosition);
+            return true;
+        }
+        return false;
+    }
 
-	@Override
-	protected void onAttachedToWindow() {
-		super.onAttachedToWindow();
-		init();
-	}
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        init();
+    }
 
-	private boolean isPositionCompletelyVisible() {
-		return mCurrentSelectedPosition >= mFirstVisiblePosition
-				&& mCurrentSelectedPosition <= mLastVisiblePosition;
-	}
+    private boolean isPositionCompletelyVisible() {
+        return mCurrentSelectedPosition >= mFirstVisiblePosition
+                && mCurrentSelectedPosition <= mLastVisiblePosition;
+    }
 
-	@Override
-	public void onScrollStateChanged(int state) {
-		super.onScrollStateChanged(state);
-		if (state == 0) tracker.select(mStringKeys.get(mCurrentSelectedPosition));
-	}
+    private boolean isPositionPartiallyVisible() {
+        return mCurrentSelectedPosition == mFirstPartiallyVisiblePosition
+                || mCurrentSelectedPosition == mLastPartiallyVisiblePosition;
+    }
+
+    private int getPositionDirection() {
+        if (mCurrentSelectedPosition < mFirstPartiallyVisiblePosition) return direction_UP;
+        return direction_DOWN;
+    }
+
+
+    @Override
+    public void onScrollStateChanged(int state) {
+        super.onScrollStateChanged(state);
+        if (state == 0) mTracker.select(mStringKeys.get(mCurrentSelectedPosition));
+    }
 }

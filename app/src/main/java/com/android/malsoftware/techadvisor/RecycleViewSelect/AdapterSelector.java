@@ -14,14 +14,13 @@ import com.android.malsoftware.techadvisor.DescriptionsPresets;
 import com.android.malsoftware.techadvisor.MillDetailValues;
 import com.android.malsoftware.techadvisor.R;
 import com.android.malsoftware.techadvisor.databinding.MillItemDefaultBinding;
-import androidx.recyclerview.selection.ItemDetailsLookup;
 
 import java.util.List;
 
 public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.SelectorHolder> {
 
     private final String TAG = "AdapterSelector";
-    public SelectionTracker tracker;
+    private SelectionTracker<String> mTracker;
     private DescriptionsPresets mDescriptionsPresets;
     private MillDetailValues Array;
     private List<String> mStrings;
@@ -29,6 +28,10 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
     public AdapterSelector(DescriptionsPresets descriptionsPresets, MillDetailValues array){
         mDescriptionsPresets = descriptionsPresets;
         this.Array = array;
+    }
+
+    public void setTracker(SelectionTracker<String> tracker) {
+        mTracker = tracker;
     }
 
     public void setStringKeys(List<String> Keys) {
@@ -44,11 +47,10 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
         return new SelectorHolder(millItemDefaultBinding);
     }
 
-    @SuppressLint("RestrictedApi")
     @Override
     public void onBindViewHolder(@NonNull SelectorHolder holder, int position) {
         String item = mStrings.get(position);
-        if (tracker != null) holder.bind(position, Array, tracker.isSelected(item));
+        if (mTracker != null) holder.bind(position, Array, mTracker.isSelected(item));
     }
 
     @Override
@@ -86,7 +88,7 @@ public class AdapterSelector extends RecycleViewScroll.Adapter<AdapterSelector.S
             }
         }
 
-        ItemDetailsLookup.ItemDetails getItemDetails() {
+        StringItemDetails getItemDetails() {
             return new StringItemDetails(getAdapterPosition(), mStrings.get(getAdapterPosition()));
         }
     }

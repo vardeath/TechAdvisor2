@@ -1,40 +1,36 @@
 package com.android.malsoftware.techadvisor;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.LinearLayout;
+import androidx.recyclerview.selection.SelectionTracker.SelectionObserver;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.*;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.android.malsoftware.techadvisor.RecycleViewSelect.AdapterSelector;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.MyItemDetailsLookup;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.MySelectionPredicate;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.RecycleViewScroll;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.StringItemKeyProvider;
-
 import java.util.List;
 
 public class MainMenuFragment extends Fragment {
 
 	private final String TAG = "MainMenuFragment";
-	private Context mContext = null;
-	private View rootView = null;
 	private MillDetailValues mMillDetailValues = null;
 	private DescriptionsPresets mDescriptionsPresets = null;
 	private RecycleViewScroll mRecycleViewScroll = null;
 	private List<String> mStringKeys = null;
-	private Object mSelectedKey = null;
-
-	private SelectionTracker mSelectionTracker = null;
+	private String mSelectedKey = null;
+	private SelectionTracker<String> mSelectionTracker = null;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -43,9 +39,8 @@ public class MainMenuFragment extends Fragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mContext = getContext();
-		mMillDetailValues = MillDetailValues.newInstance(mContext);
-		mDescriptionsPresets = DescriptionsPresets.newInstance(mContext);
+		mMillDetailValues = MillDetailValues.newInstance(getActivity());
+		mDescriptionsPresets = DescriptionsPresets.newInstance(getActivity());
 		mStringKeys = mMillDetailValues.getStringKeys();
 	}
 
@@ -53,10 +48,31 @@ public class MainMenuFragment extends Fragment {
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
 	                         @Nullable Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.menu_main_fragment, container, false);
+		View rootView = inflater.inflate(R.layout.menu_main_fragment, container, false);
 
 		mRecycleViewScroll = rootView.findViewById(R.id.main_resycleview);
-		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getActivity());
+		RecyclerView.LayoutManager mLayManager = new LinearLayoutManager(getContext()) {
+			@Override
+			public void smoothScrollToPosition(RecyclerView recyclerView,
+											   RecyclerView.State state, int position) {
+				super.smoothScrollToPosition(recyclerView, state, position);
+				Activity activity = getActivity();
+				if (activity != null) {
+					LinearSmoothScroller smoothScroller = new LinearSmoothScroller(activity) {
+
+						private static final float SPEED = 25f;// Change this value (default=25f)
+
+						@Override
+						protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+							return SPEED / displayMetrics.densityDpi;
+						}
+
+					};
+					smoothScroller.setTargetPosition(position);
+					startSmoothScroll(smoothScroller);
+				}
+			}
+		};
 		mRecycleViewScroll.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
 		Button btn2 = rootView.findViewById(R.id.button_down);
@@ -79,7 +95,7 @@ public class MainMenuFragment extends Fragment {
 		mRecycleViewScroll.setScrollbarFadingEnabled(true);
 		mRecycleViewScroll.initStringKeys(mStringKeys);
 
-		mSelectionTracker = new SelectionTracker.Builder<String>(
+		mSelectionTracker = new SelectionTracker.Builder<>(
 				"mySelection",
 				mRecycleViewScroll,
 				new StringItemKeyProvider(1, mStringKeys),
@@ -88,12 +104,11 @@ public class MainMenuFragment extends Fragment {
         		).withSelectionPredicate(
 				new MySelectionPredicate()).build();
 
-		adapterSelector.tracker = mSelectionTracker;
-		mRecycleViewScroll.tracker = mSelectionTracker;
+		mRecycleViewScroll.setTracker(mSelectionTracker);
 
-		mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver() {
+		mSelectionTracker.addObserver(new SelectionObserver<String>() {
 			@Override
-			public void onItemStateChanged(@NonNull Object key, boolean selected) {
+			public void onItemStateChanged(@NonNull String key, boolean selected) {
 				super.onItemStateChanged(key, selected);
 				if (selected)  {
 					mSelectedKey = key;
@@ -113,15 +128,13 @@ public class MainMenuFragment extends Fragment {
 			}
 		});
 
-
-		mSelectionTracker.select(mStringKeys.get(0));
+		mSelectionTracker.select(mStringKeys.get(0)); //First selected element
 	}
 
-	private int findPositionByKey(Object key) {
-		String onj = (String) key;
+	private int findPositionByKey(String key) {
 		for (int i = 0; i < mStringKeys.size(); ++i) {
-			if (onj == mStringKeys.get(i)) return i;
+			if (key.equals(mStringKeys.get(i))) return i;
 		}
-		return Integer.parseInt(null);
+		return 0;
 	}
 }

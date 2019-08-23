@@ -2,12 +2,11 @@ package com.android.malsoftware.techadvisor.RecycleViewSelect;
 
 import android.view.MotionEvent;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 
-public class MyItemDetailsLookup extends ItemDetailsLookup {
+public class MyItemDetailsLookup extends ItemDetailsLookup<String> {
 
     private final String TAG = "MyItemDetailsLookup";
     private RecycleViewScroll mRecycleViewScroll;
@@ -18,10 +17,11 @@ public class MyItemDetailsLookup extends ItemDetailsLookup {
 
     @Nullable
     @Override
-    public ItemDetails getItemDetails(@NonNull MotionEvent e) {
+    public StringItemDetails getItemDetails(@NonNull MotionEvent e) {
         View view = mRecycleViewScroll.findChildViewUnder(e.getX(), e.getY());
         if (view != null) {
-            return ((AdapterSelector.SelectorHolder) mRecycleViewScroll.getChildViewHolder(view)).getItemDetails();
+
+            return  ((AdapterSelector.SelectorHolder) mRecycleViewScroll.getChildViewHolder(view)).getItemDetails();
         }
         return null;
     }
