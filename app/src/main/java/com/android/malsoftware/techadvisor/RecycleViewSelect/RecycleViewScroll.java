@@ -10,9 +10,6 @@ import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.malsoftware.techadvisor.RecycleRange;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class RecycleViewScroll extends RecyclerView {
@@ -28,6 +25,7 @@ public class RecycleViewScroll extends RecyclerView {
 	 * Если пользователь осуществлял скроллинг вручную, то прокрутка будет только к выделенному
 	 * элементу без учета диапазона.
 	 */
+
 	public SelectionTracker tracker;
 	private int mCurrentSelectedPosition = 0;
 	private LinearLayoutManager mLinearLayoutManager = null;
@@ -38,7 +36,7 @@ public class RecycleViewScroll extends RecyclerView {
 	private int mFirstPartiallyVisiblePosition;
 	private int mLastPartiallyVisiblePosition;
 
-	public void initStringKeys(List<String> keys){
+	public void initStringKeys(List<String> keys) {
 		mStringKeys = keys;
 	}
 
@@ -55,7 +53,7 @@ public class RecycleViewScroll extends RecyclerView {
 	}
 
 	public RecycleViewScroll(@NonNull Context context, @Nullable AttributeSet attrs,
-	                         int defStyle) {
+							 int defStyle) {
 		super(context, attrs, defStyle);
 	}
 
@@ -81,11 +79,25 @@ public class RecycleViewScroll extends RecyclerView {
 		if (mCurrentSelectedPosition + 1 < mStringKeys.size()) ++mCurrentSelectedPosition;
 		else mCurrentSelectedPosition = 0;
 
-		tracker.select(mStringKeys.get(mCurrentSelectedPosition));
+		/**
+		 * Определение необходимости делать прокрутку списка к выделенной позиции.
+		 * Если выделенная позиция находится в видимой области, прокрутка не выполняется.
+		 */
+		if (isPositionCompletelyVisible()) {
+			tracker.select(mStringKeys.get(mCurrentSelectedPosition));
+			return;
+		}
+
+		if (mCurrentSelectedPosition == mFirstPartiallyVisiblePosition) {
+			smoothScrollToPosition(mCurrentSelectedPosition);
+			return;
+		}
 
 		if (mFirstPartiallyVisiblePosition > mCurrentSelectedPosition
 				&& mLastPartiallyVisiblePosition > mCurrentSelectedPosition) {
-			smoothScrollToPosition(mCurrentSelectedPosition - getScrollableCount()/2);
+			int pointerPosition = mCurrentSelectedPosition - getScrollableCount() / 2;
+			if (pointerPosition < 0) pointerPosition = 0;
+			smoothScrollToPosition(pointerPosition);
 			return;
 		}
 
@@ -121,5 +133,16 @@ public class RecycleViewScroll extends RecyclerView {
 	protected void onAttachedToWindow() {
 		super.onAttachedToWindow();
 		init();
+	}
+
+	private boolean isPositionCompletelyVisible() {
+		return mCurrentSelectedPosition >= mFirstVisiblePosition
+				&& mCurrentSelectedPosition <= mLastVisiblePosition;
+	}
+
+	@Override
+	public void onScrollStateChanged(int state) {
+		super.onScrollStateChanged(state);
+		if (state == 0) tracker.select(mStringKeys.get(mCurrentSelectedPosition));
 	}
 }

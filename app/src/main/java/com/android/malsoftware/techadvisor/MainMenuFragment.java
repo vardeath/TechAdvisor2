@@ -69,7 +69,8 @@ public class MainMenuFragment extends Fragment {
 	}
 
 	private void updateUi() {
-		AdapterSelector adapterSelector = new AdapterSelector(mDescriptionsPresets, mMillDetailValues);
+		AdapterSelector adapterSelector =
+				new AdapterSelector(mDescriptionsPresets, mMillDetailValues);
 		adapterSelector.setStringKeys(mStringKeys);
 		mRecycleViewScroll.setAdapter(adapterSelector);
 		RecyclerView.ItemAnimator animator = mRecycleViewScroll.getItemAnimator();
