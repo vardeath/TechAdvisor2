@@ -1,6 +1,7 @@
 package com.android.malsoftware.techadvisor;
 
 import android.app.Activity;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.*;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +22,9 @@ import com.android.malsoftware.techadvisor.RecycleViewSelect.MyItemDetailsLookup
 import com.android.malsoftware.techadvisor.RecycleViewSelect.MySelectionPredicate;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.RecycleViewScroll;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.StringItemKeyProvider;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.SwipeController;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.SwipeControllerActions;
+
 import java.util.List;
 
 public class MainMenuFragment extends Fragment {
@@ -31,6 +36,7 @@ public class MainMenuFragment extends Fragment {
 	private List<String> mStringKeys = null;
 	private String mSelectedKey = null;
 	private SelectionTracker<String> mSelectionTracker = null;
+	private SwipeController swipeController = null;
 
 	static MainMenuFragment newInstance() {
 		return new MainMenuFragment();
@@ -73,6 +79,7 @@ public class MainMenuFragment extends Fragment {
 				}
 			}
 		};
+
 		mRecycleViewScroll.setLayoutManager(mLayManager);
 		Button btn = rootView.findViewById(R.id.button_up);
 		Button btn2 = rootView.findViewById(R.id.button_down);
@@ -129,6 +136,18 @@ public class MainMenuFragment extends Fragment {
 		});
 
 		mSelectionTracker.select(mStringKeys.get(0)); //First selected element
+
+		swipeController = new SwipeController(new SwipeControllerActions());
+		ItemTouchHelper itemTouchhelper = new ItemTouchHelper(swipeController);
+		itemTouchhelper.attachToRecyclerView(mRecycleViewScroll);
+
+		mRecycleViewScroll.addItemDecoration(new RecyclerView.ItemDecoration() {
+			@Override
+			public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent,
+							   @NonNull RecyclerView.State state) {
+				swipeController.onDraw(c);
+			}
+		});
 	}
 
 	private int findPositionByKey(String key) {
