@@ -211,5 +211,7 @@ public class SwipeController extends Callback {
             drawButtons(c, currentItemViewHolder);
         }
     }
+
+
 }
 

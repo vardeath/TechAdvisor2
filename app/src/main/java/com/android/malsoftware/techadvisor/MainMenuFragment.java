@@ -2,6 +2,7 @@ package com.android.malsoftware.techadvisor;
 
 import android.app.Activity;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import com.android.malsoftware.techadvisor.RecycleViewSelect.RecycleViewScroll;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.StringItemKeyProvider;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.SwipeController;
 import com.android.malsoftware.techadvisor.RecycleViewSelect.SwipeControllerActions;
+import com.android.malsoftware.techadvisor.RecycleViewSelect.SwipeHelper;
 
 import java.util.List;
 
@@ -135,19 +137,59 @@ public class MainMenuFragment extends Fragment {
 			}
 		});
 
+		SwipeHelper swipeHelper = new SwipeHelper(getActivity(), mRecycleViewScroll) {
+			@Override
+			public void instantiateUnderlayButton(RecyclerView.ViewHolder viewHolder, List<UnderlayButton> underlayButtons) {
+				underlayButtons.add(new SwipeHelper.UnderlayButton(
+						"Delete",
+						0,
+						Color.parseColor("#FF3C30"),
+						new SwipeHelper.UnderlayButtonClickListener() {
+							@Override
+							public void onClick(int pos) {
+								// TODO: onDelete
+							}
+						}
+				));
+
+				underlayButtons.add(new SwipeHelper.UnderlayButton(
+						"Transfer",
+						0,
+						Color.parseColor("#FF9502"),
+						new SwipeHelper.UnderlayButtonClickListener() {
+							@Override
+							public void onClick(int pos) {
+								// TODO: OnTransfer
+							}
+						}
+				));
+				/*underlayButtons.add(new SwipeHelper.UnderlayButton(
+						"Unshare",
+						0,
+						Color.parseColor("#C7C7CB"),
+						new SwipeHelper.UnderlayButtonClickListener() {
+							@Override
+							public void onClick(int pos) {
+								// TODO: OnUnshare
+							}
+						}
+				));*/
+			}
+		};
+
 		mSelectionTracker.select(mStringKeys.get(0)); //First selected element
 
-		swipeController = new SwipeController(new SwipeControllerActions());
-		ItemTouchHelper itemTouchhelper = new ItemTouchHelper(swipeController);
+		//swipeController = new SwipeController(new SwipeControllerActions());
+		ItemTouchHelper itemTouchhelper = new ItemTouchHelper(swipeHelper);
 		itemTouchhelper.attachToRecyclerView(mRecycleViewScroll);
 
-		mRecycleViewScroll.addItemDecoration(new RecyclerView.ItemDecoration() {
+		/*mRecycleViewScroll.addItemDecoration(new RecyclerView.ItemDecoration() {
 			@Override
 			public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent,
 							   @NonNull RecyclerView.State state) {
 				swipeController.onDraw(c);
 			}
-		});
+		});*/
 	}
 
 	private int findPositionByKey(String key) {
