@@ -1,6 +1,6 @@
-package com.android.malsoftware.techadvisor;
+package com.android.malsoftware.techadvisor
 
-public enum FieldType {
+enum class FieldType {
     /**
      * Milling group
      */
